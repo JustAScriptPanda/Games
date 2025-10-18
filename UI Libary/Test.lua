@@ -32,6 +32,27 @@ function tween(instance, time, properties, callback)
     end)
 end
 
+for _, obj in ipairs(GUI:GetDescendants()) do
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+        obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+        local existingGradient = obj:FindFirstChildOfClass("UIGradient")
+        if existingGradient then
+            existingGradient:Destroy()
+        end
+
+        local grad = Instance.new("UIGradient")
+        grad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+        })
+        grad.Rotation = 10
+        grad.Parent = obj
+    end
+end
+
+
 function lib:CreateWindow(title)
     local window = {
         Font = Enum.Font.RobotoMono,
@@ -295,43 +316,51 @@ local Mnu = Create("Frame", {
         end
         return size
     end
+function window:NewTab(tabTitle)
+    local comp1 = {}
 
-    function window:NewTab(tabTitle)
-        local comp1 = {}
-
-        local button = Create("TextButton", {
+    local button = Create("TextButton", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 25),
+        Font = window.Font,
+        Text = "",
+        Name = tabTitle,
+        LayoutOrder = MenuCount,
+        TextColor3 = Color3.fromRGB(222, 222, 222),
+        TextSize = 14,
+        Parent = Menu
+    }, {
+        Create("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+            }),
+            Rotation = 30
+        }),
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            VerticalAlignment = Enum.VerticalAlignment.Center
+        }),
+        Create("ImageLabel", {
+            Size = UDim2.new(0, 0, 1, -5),
+            Image = "http://www.roblox.com/asset/?id=6031094680",
+            ImageColor3 = window.AccentColor,
+            ScaleType = Enum.ScaleType.Fit,
+            BackgroundTransparency = 1
+        }),
+        Create("TextLabel", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 25),
+            Size = UDim2.new(0.7, 0, 1, 0),
             Font = window.Font,
-            Text = "",
-            Name = tabTitle,
-            LayoutOrder = MenuCount,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Text = tabTitle,
             TextColor3 = Color3.fromRGB(222, 222, 222),
             TextSize = 14,
-            Parent = Menu
-        }, {
-            Create("UIListLayout", {
-                FillDirection = Enum.FillDirection.Horizontal,
-                HorizontalAlignment = Enum.HorizontalAlignment.Center,
-                VerticalAlignment = Enum.VerticalAlignment.Center
-            }),
-            Create("ImageLabel", {
-                Size = UDim2.new(0, 0, 1, -5),
-                Image = "http://www.roblox.com/asset/?id=6031094680",
-                ImageColor3 = window.AccentColor,
-                ScaleType = Enum.ScaleType.Fit,
-                BackgroundTransparency = 1
-            }),
-            Create("TextLabel", {
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0.7, 0, 1, 0),
-                Font = window.Font,
-                TextXAlignment = Enum.TextXAlignment.Center,
-                Text = tabTitle,
-                TextColor3 = Color3.fromRGB(222, 222, 222),
-                TextSize = 14,
-            })
         })
+    })
+
         
         local tabTextSize = TextService:GetTextSize(button.TextLabel.Text, 14, window.Font, Vector2.new(button.TextLabel.AbsoluteSize.X, button.TextLabel.AbsoluteSize.Y))
         button.TextLabel.Size = UDim2.new(0, tabTextSize.X, 1, 0)
