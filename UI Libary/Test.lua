@@ -199,27 +199,36 @@ function lib:CreateWindow(title)
     end)
 
     local Container = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 2, 0, 25),
-        Size = UDim2.new(1, -4, 1, -27),
-        ClipsDescendants = true,
-        Parent = MainFrame
-    })
+    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+    BorderSizePixel = 0,
+    Position = UDim2.new(0, 2, 0, 25),
+    Size = UDim2.new(1, -4, 1, -27),
+    ClipsDescendants = true,
+    Parent = MainFrame
+})
 
-    local Mnu = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        BorderSizePixel = 0,
-        Size = UDim2.new(0, 130, 1, 0),
-        Parent = Container
-    }, {Create("Frame", {
+local Mnu = Create("Frame", {
+    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+    BorderSizePixel = 0,
+    Size = UDim2.new(0, 130, 1, 0),
+    Parent = Container
+}, {
+    Create("Frame", {
         BorderSizePixel = 0,
         Position = UDim2.new(1, 0, 0, 0),
         Size = UDim2.new(0, 100, 1, 0)
-    }, {Create("UIGradient", {
-        Color = ColorSequence.new(Color3.new(0, 0, 0)),
-        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.795, 0), NumberSequenceKeypoint.new(0.295, 1, 0), NumberSequenceKeypoint.new(1, 1, 0)})
-    })})})
+    }, {
+        Create("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+            }),
+            Rotation = 45
+        })
+    })
+})
+
 
     local MenuCount = 0
     local Menu = Create("ScrollingFrame", {
