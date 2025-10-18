@@ -372,39 +372,48 @@ local Mnu = Create("Frame", {
         })
         MenuCount = MenuCount + 1
         function comp1:AddSection(secTitle)
-            local components = {}
-            local secCollapsed = false;
-            local order = 0;
-            local bg = Create("Frame", {
-                BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-                Size = UDim2.new(1, 0, 0, 25),
-                ClipsDescendants = true,
-                Parent = page
-            }, {
-                Create("UICorner", {
-                    CornerRadius = UDim.new(0, 4)
-                }),
-                Create("UIPadding", {
-                    PaddingLeft = UDim.new(0, 5),
-                    PaddingRight = UDim.new(0, 5),
-                    PaddingTop = UDim.new(0, 5),
-                    PaddingBottom = UDim.new(0, 5)
-                }),
-                Create("TextLabel", {
-                    BackgroundTransparency = 1,
-                    Position = UDim2.new(0, 5, 0, 2),
-                    Size = UDim2.new(1, -5, 0, 15),
-                    Font = window.Font,
-                    Text = secTitle,
-                    TextColor3 = Color3.fromRGB(255, 255, 255),
-                    TextSize = 14,
-                    TextXAlignment = Enum.TextXAlignment.Left
-                }),
-                Create("UIStroke", {
-                    ApplyStrokeMode = 1,
-                    Color = Color3.fromRGB(24, 25, 30)
-                })
-            })
+    local components = {}
+    local secCollapsed = false;
+    local order = 0;
+    local bg = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+        Size = UDim2.new(1, 0, 0, 25),
+        ClipsDescendants = true,
+        Parent = page
+    }, {
+        Create("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
+            }),
+            Rotation = 45,
+        }),
+        Create("UICorner", {
+            CornerRadius = UDim.new(0, 4)
+        }),
+        Create("UIPadding", {
+            PaddingLeft = UDim.new(0, 5),
+            PaddingRight = UDim.new(0, 5),
+            PaddingTop = UDim.new(0, 5),
+            PaddingBottom = UDim.new(0, 5)
+        }),
+        Create("TextLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 5, 0, 2),
+            Size = UDim2.new(1, -5, 0, 15),
+            Font = window.Font,
+            Text = secTitle,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left
+        }),
+        Create("UIStroke", {
+            ApplyStrokeMode = 1,
+            Color = Color3.fromRGB(24, 25, 30)
+        })
+    })
+
 
             local container = Create("Frame", {
                 BackgroundTransparency = 1,
