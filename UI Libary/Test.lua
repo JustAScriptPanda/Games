@@ -34,6 +34,7 @@ end
 
 local GUI = game.CoreGui:FindFirstChild("FluxHub")
 if not GUI then return end
+
 local gradientColors = {
     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
     ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 180, 255)),
@@ -50,7 +51,28 @@ local function applyGradient(obj)
     grad.Parent = obj
 end
 
-for _, obj in ipairs(GUI:GetDescendants()) do
+local function applyColors()
+    for _, obj in ipairs(GUI:GetDescendants()) do
+        pcall(function()
+            if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+                applyGradient(obj)
+            elseif obj:IsA("Frame") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                obj.BackgroundColor3 = Color3.fromRGB(10, 15, 20)
+                applyGradient(obj)
+            elseif obj:IsA("UIStroke") then
+                obj.Color = Color3.fromRGB(0, 220, 255)
+            elseif obj:IsA("ScrollingFrame") then
+                obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
+            end
+        end)
+    end
+end
+
+applyColors()
+
+GUI.DescendantAdded:Connect(function(obj)
+    task.wait(0.05)
     pcall(function()
         if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
             obj.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -64,7 +86,7 @@ for _, obj in ipairs(GUI:GetDescendants()) do
             obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
         end
     end)
-end
+end)
 
 task.spawn(function()
     while task.wait(0.1) do
@@ -75,6 +97,7 @@ task.spawn(function()
         end
     end
 end)
+
 
 function lib:CreateWindow(title)
     local window = {
