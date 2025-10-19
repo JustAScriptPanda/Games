@@ -32,26 +32,49 @@ function tween(instance, time, properties, callback)
     end)
 end
 
-for _, obj in ipairs(GUI:GetDescendants()) do
-    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-        obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+local GUI = game.CoreGui:FindFirstChild("FluxHub")
+if not GUI then return end
+local gradientColors = {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 180, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 255))
+}
 
-        local existingGradient = obj:FindFirstChildOfClass("UIGradient")
-        if existingGradient then
-            existingGradient:Destroy()
-        end
-
-        local grad = Instance.new("UIGradient")
-        grad.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-        })
-        grad.Rotation = 10
-        grad.Parent = obj
+local function applyGradient(obj)
+    if obj:FindFirstChildOfClass("UIGradient") then
+        obj:FindFirstChildOfClass("UIGradient"):Destroy()
     end
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new(gradientColors)
+    grad.Rotation = math.random(0, 360)
+    grad.Parent = obj
 end
 
+for _, obj in ipairs(GUI:GetDescendants()) do
+    pcall(function()
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+            obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+            applyGradient(obj)
+        elseif obj:IsA("Frame") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            obj.BackgroundColor3 = Color3.fromRGB(10, 15, 20)
+            applyGradient(obj)
+        elseif obj:IsA("UIStroke") then
+            obj.Color = Color3.fromRGB(0, 220, 255)
+        elseif obj:IsA("ScrollingFrame") then
+            obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
+        end
+    end)
+end
+
+task.spawn(function()
+    while task.wait(0.1) do
+        for _, obj in ipairs(GUI:GetDescendants()) do
+            if obj:IsA("UIGradient") then
+                obj.Rotation = (obj.Rotation + 1) % 360
+            end
+        end
+    end
+end)
 
 function lib:CreateWindow(title)
     local window = {
@@ -109,37 +132,27 @@ function lib:CreateWindow(title)
     end
 
     local MainFrame = Create("Frame", {
-    BackgroundColor3 = Color3.fromRGB(19, 21, 25),
-    BorderSizePixel = 0,
-    Size = UDim2.new(0, 600, 0, 300),
-    Position = UDim2.new(0.5, -300, 0.5, -150),
-    Parent = GUI
-}, {
-    Create("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-        }),
-        Rotation = 45,
-    }),
-    Create("TextLabel", {
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, -20, 0, 25),
-        Position = UDim2.new(0, 25, 0, 1),
-        Text = title,
-        Font = Enum.Font.Roboto,
-        TextColor3 = Color3.fromRGB(243, 243, 243),
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left
-    }),
-    Create("ImageLabel", {
+        BackgroundColor3 = Color3.fromRGB(19, 21, 25),
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 600, 0, 300),
+        Position = UDim2.new(0.5, -300, 0.5, -150),
+        Parent = GUI
+    }, {
+        Create("TextLabel", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -20, 0, 25),
+            Position = UDim2.new(0, 25, 0, 1),
+            Text = title,
+            Font = Enum.Font.Roboto,
+            TextColor3 = Color3.fromRGB(243, 243, 243),
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left
+    }), Create("ImageLabel", {
         Position = UDim2.new(0, 3, 0, 3),
         Size = UDim2.new(0, 20, 0, 20),
         BackgroundTransparency = 1,
         Image = "rbxassetid://117796620488930"
-    }),
-    Create("UICorner", {
+    }), Create("UICorner", {
         CornerRadius = UDim.new(0, 3)
     })})
 
@@ -220,36 +233,27 @@ function lib:CreateWindow(title)
     end)
 
     local Container = Create("Frame", {
-    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-    BorderSizePixel = 0,
-    Position = UDim2.new(0, 2, 0, 25),
-    Size = UDim2.new(1, -4, 1, -27),
-    ClipsDescendants = true,
-    Parent = MainFrame
-})
+        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 2, 0, 25),
+        Size = UDim2.new(1, -4, 1, -27),
+        ClipsDescendants = true,
+        Parent = MainFrame
+    })
 
-local Mnu = Create("Frame", {
-    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-    BorderSizePixel = 0,
-    Size = UDim2.new(0, 130, 1, 0),
-    Parent = Container
-}, {
-    Create("Frame", {
+    local Mnu = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 130, 1, 0),
+        Parent = Container
+    }, {Create("Frame", {
         BorderSizePixel = 0,
         Position = UDim2.new(1, 0, 0, 0),
         Size = UDim2.new(0, 100, 1, 0)
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        })
-    })
-})
-
+    }, {Create("UIGradient", {
+        Color = ColorSequence.new(Color3.new(0, 0, 0)),
+        Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.795, 0), NumberSequenceKeypoint.new(0.295, 1, 0), NumberSequenceKeypoint.new(1, 1, 0)})
+    })})})
 
     local MenuCount = 0
     local Menu = Create("ScrollingFrame", {
@@ -316,51 +320,43 @@ local Mnu = Create("Frame", {
         end
         return size
     end
-function window:NewTab(tabTitle)
-    local comp1 = {}
 
-    local button = Create("TextButton", {
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 25),
-        Font = window.Font,
-        Text = "",
-        Name = tabTitle,
-        LayoutOrder = MenuCount,
-        TextColor3 = Color3.fromRGB(222, 222, 222),
-        TextSize = 14,
-        Parent = Menu
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 30
-        }),
-        Create("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-            VerticalAlignment = Enum.VerticalAlignment.Center
-        }),
-        Create("ImageLabel", {
-            Size = UDim2.new(0, 0, 1, -5),
-            Image = "http://www.roblox.com/asset/?id=6031094680",
-            ImageColor3 = window.AccentColor,
-            ScaleType = Enum.ScaleType.Fit,
-            BackgroundTransparency = 1
-        }),
-        Create("TextLabel", {
+    function window:NewTab(tabTitle)
+        local comp1 = {}
+
+        local button = Create("TextButton", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(0.7, 0, 1, 0),
+            Size = UDim2.new(1, 0, 0, 25),
             Font = window.Font,
-            TextXAlignment = Enum.TextXAlignment.Center,
-            Text = tabTitle,
+            Text = "",
+            Name = tabTitle,
+            LayoutOrder = MenuCount,
             TextColor3 = Color3.fromRGB(222, 222, 222),
             TextSize = 14,
+            Parent = Menu
+        }, {
+            Create("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                VerticalAlignment = Enum.VerticalAlignment.Center
+            }),
+            Create("ImageLabel", {
+                Size = UDim2.new(0, 0, 1, -5),
+                Image = "http://www.roblox.com/asset/?id=6031094680",
+                ImageColor3 = window.AccentColor,
+                ScaleType = Enum.ScaleType.Fit,
+                BackgroundTransparency = 1
+            }),
+            Create("TextLabel", {
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0.7, 0, 1, 0),
+                Font = window.Font,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                Text = tabTitle,
+                TextColor3 = Color3.fromRGB(222, 222, 222),
+                TextSize = 14,
+            })
         })
-    })
-
         
         local tabTextSize = TextService:GetTextSize(button.TextLabel.Text, 14, window.Font, Vector2.new(button.TextLabel.AbsoluteSize.X, button.TextLabel.AbsoluteSize.Y))
         button.TextLabel.Size = UDim2.new(0, tabTextSize.X, 1, 0)
@@ -401,48 +397,39 @@ function window:NewTab(tabTitle)
         })
         MenuCount = MenuCount + 1
         function comp1:AddSection(secTitle)
-    local components = {}
-    local secCollapsed = false;
-    local order = 0;
-    local bg = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(1, 0, 0, 25),
-        ClipsDescendants = true,
-        Parent = page
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45,
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("UIPadding", {
-            PaddingLeft = UDim.new(0, 5),
-            PaddingRight = UDim.new(0, 5),
-            PaddingTop = UDim.new(0, 5),
-            PaddingBottom = UDim.new(0, 5)
-        }),
-        Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 5, 0, 2),
-            Size = UDim2.new(1, -5, 0, 15),
-            Font = window.Font,
-            Text = secTitle,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        })
-    })
-
+            local components = {}
+            local secCollapsed = false;
+            local order = 0;
+            local bg = Create("Frame", {
+                BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                Size = UDim2.new(1, 0, 0, 25),
+                ClipsDescendants = true,
+                Parent = page
+            }, {
+                Create("UICorner", {
+                    CornerRadius = UDim.new(0, 4)
+                }),
+                Create("UIPadding", {
+                    PaddingLeft = UDim.new(0, 5),
+                    PaddingRight = UDim.new(0, 5),
+                    PaddingTop = UDim.new(0, 5),
+                    PaddingBottom = UDim.new(0, 5)
+                }),
+                Create("TextLabel", {
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 5, 0, 2),
+                    Size = UDim2.new(1, -5, 0, 15),
+                    Font = window.Font,
+                    Text = secTitle,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Left
+                }),
+                Create("UIStroke", {
+                    ApplyStrokeMode = 1,
+                    Color = Color3.fromRGB(24, 25, 30)
+                })
+            })
 
             local container = Create("Frame", {
                 BackgroundTransparency = 1,
@@ -489,142 +476,117 @@ function window:NewTab(tabTitle)
             end)
 
             function components:AddButton(buttonTitle, tooltip, callback)
-    tooltip = tooltip or nil
-    callback = callback or function() end
-    local btndebounce = false;
-    local b1 = Create("TextButton", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(1, 0, 0, 30),
-        Parent = container,
-        Text = "",
-        AutoButtonColor = false,
-        LayoutOrder = order
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0.5, -8),
-            Size = UDim2.new(1, -10, 0, 14),
-            Font = window.Font,
-            Text = buttonTitle,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        }),
-        Create("ImageLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(1, -30, 0.5, -12),
-            Size = UDim2.new(0, 24, 0, 24),
-            Image = "http://www.roblox.com/asset/?id=6023565895",
-            ImageTransparency = 0.7,
-            ScaleType = Enum.ScaleType.Stretch
-        })
-    })
-    b1.MouseButton1Click:Connect(function()
-        callback()
-        if not btndebounce then
-            btndebounce = true
-            TS:Create(b1:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {Color = window.AccentColor}):Play()
-            TS:Create(b1:FindFirstChildOfClass("ImageLabel"), TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {ImageColor3 = window.AccentColor}):Play()
-            wait(0.4)
-            btndebounce = false
-        end
-    end)
-    b1.MouseEnter:Connect(function()
-        showTooltip(tooltip)
-    end)
-    b1.MouseLeave:Connect(function()
-        hideTooltip()
-    end)
-    container.Size = UDim2.new(1, 0, 0, sectionSize(bg));
-    bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30);
-    order = order + 1;
-end
-
+                tooltip = tooltip or nil
+                callback = callback or function() end
+                local btndebounce = false;
+                local b1 = Create("TextButton", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(1, 0, 0, 30),
+                    Parent = container,
+                    Text = "",
+                    AutoButtonColor = false,
+                    LayoutOrder = order
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color = Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    }),
+                    Create("TextLabel", {
+                        BackgroundTransparency = 1,
+                        Position = UDim2.new(0, 10, 0.5, -8),
+                        Size = UDim2.new(1, -10, 0, 14),
+                        Font = window.Font,
+                        Text = buttonTitle,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left
+                    }),
+                    Create("ImageLabel", {
+                        BackgroundTransparency = 1,
+                        Position = UDim2.new(1, -30, 0.5, -12),
+                        Size = UDim2.new(0, 24, 0, 24),
+                        Image = "http://www.roblox.com/asset/?id=6023565895",
+                        ImageTransparency = 0.7,
+                        ScaleType = Enum.ScaleType.Stretch
+                    })
+                })
+                b1.MouseButton1Click:Connect(function()
+                    callback()
+                    if not btndebounce then
+                        btndebounce = true
+                        TS:Create(b1:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {Color = window.AccentColor}):Play()
+                        TS:Create(b1:FindFirstChildOfClass("ImageLabel"), TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {ImageColor3 = window.AccentColor}):Play()
+                        wait(0.4)
+                        btndebounce = false
+                    end
+                end)
+                b1.MouseEnter:Connect(function()
+                    showTooltip(tooltip)
+                end)
+                b1.MouseLeave:Connect(function()
+                    hideTooltip()
+                end)
+                container.Size = UDim2.new(1, 0, 0, sectionSize(bg));
+                bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30);
+                order = order + 1;
+            end
 
             function components:AddToggle(buttonTitle, tooltip, default, callback)
-    local t1 = {}
-    tooltip = tooltip or nil
-    t1.State = default or false;
-    callback = callback or function() end
-    local b1 = Create("TextButton", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(1, 0, 0, 30),
-        Parent = container,
-        Text = "",
-        AutoButtonColor = false,
-        LayoutOrder = order
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0.5, -8),
-            Size = UDim2.new(1, -10, 0, 14),
-            Font = window.Font,
-            Text = buttonTitle,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-    })
-    local toggle = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(20, 21, 25),
-        Size = UDim2.new(0, 24, 0, 24),
-        Position = UDim2.new(1, -30, 0.5, -12),
-        Parent = b1
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = t1.State and window.AccentColor or Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("ImageLabel", {
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 20, 0, 20),
-            Position = UDim2.new(0.5, -10, 0.5, -10),
-            Image = "http://www.roblox.com/asset/?id=6031094667",
-            ImageColor3 = window.AccentColor,
-            ImageTransparency = t1.State and 0 or 1
-        })
-    })
+                local t1 = {}
+                tooltip = tooltip or nil
+                t1.State = default or false;
+                callback = callback or function() end
+                local b1 = Create("TextButton", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(1, 0, 0, 30),
+                    Parent = container,
+                    Text = "",
+                    AutoButtonColor = false,
+                    LayoutOrder = order
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color = Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    }),
+                    Create("TextLabel", {
+                        BackgroundTransparency = 1,
+                        Position = UDim2.new(0, 10, 0.5, -8),
+                        Size = UDim2.new(1, -10, 0, 14),
+                        Font = window.Font,
+                        Text = buttonTitle,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left
+                    })
+                })
+                local toggle = Create("Frame", {
+                    BackgroundColor3 = Color3.fromRGB(20, 21, 25),
+                    Size = UDim2.new(0, 24, 0, 24),
+                    Position = UDim2.new(1, -30, 0.5, -12),
+                    Parent = b1
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color = t1.State and window.AccentColor or Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    }),
+                    Create("ImageLabel", {
+                        BackgroundTransparency = 1,
+                        Size = UDim2.new(0, 20, 0, 20),
+                        Position = UDim2.new(0.5, -10, 0.5, -10),
+                        Image = "http://www.roblox.com/asset/?id=6031094667",
+                        ImageColor3 = window.AccentColor,
+                        ImageTransparency = t1.State and 0 or 1
+                    })
+                })
 
                 b1.MouseButton1Click:Connect(function()
                     t1.State = not t1.State;
@@ -653,125 +615,176 @@ end
             end
 
             function components:AddTextBox(boxTitle, tooltip, placeholder, default, callback)
-    tooltip = tooltip or nil
-    placeholder = placeholder or ""
-    default = default or ""
-    callback = callback or function() end
-    local b1 = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(1, 0, 0, 30),
-        Parent = container,
-        LayoutOrder = order
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0.5, -8),
-            Size = UDim2.new(1, -10, 0, 14),
-            Font = window.Font,
-            Text = boxTitle,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-    })
-    local textbox = Create("TextBox", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(0, 150, 0, 24),
-        Position = UDim2.new(1, -155, 0.5, -12),
-        Parent = b1,
-        Font = window.Font,
-        Text = default,
-        PlaceholderText = placeholder,
-        TextColor3 = Color3.new(1, 1, 1),
-        TextSize = 14,
-        TextWrapped = true
-    }, {
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        })
-    })
+                tooltip = tooltip or nil
+                placeholder = placeholder or ""
+                default = default or ""
+                callback = callback or function() end
+                local b1 = Create("Frame", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(1, 0, 0, 30),
+                    Parent = container,
+                    LayoutOrder = order
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color = Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    }),
+                    Create("TextLabel", {
+                        BackgroundTransparency = 1,
+                        Position = UDim2.new(0, 10, 0.5, -8),
+                        Size = UDim2.new(1, -10, 0, 14),
+                        Font = window.Font,
+                        Text = boxTitle,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left
+                    })
+                })
+                local textbox = Create("TextBox", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(0, 150, 0, 24),
+                    Position = UDim2.new(1, -155, 0.5, -12),
+                    Parent = b1,
+                    Font = window.Font,
+                    Text = default,
+                    PlaceholderText = placeholder,
+                    TextColor3 = Color3.new(1, 1, 1),
+                    TextSize = 14,
+                    TextWrapped = true
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color =Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    })
+                })
 
-    textbox.Focused:Connect(function()
-        tween(textbox.UIStroke, 0.3, {Color = window.AccentColor})
-    end)
+                textbox.Focused:Connect(function()
+                    tween(textbox.UIStroke, 0.3, {Color = window.AccentColor})
+                end)
 
-    textbox.FocusLost:Connect(function()
-        tween(textbox.UIStroke, 0.3, {Color = Color3.fromRGB(24, 25, 30)})
-        callback(textbox.Text)
-    end)
+                textbox.FocusLost:Connect(function()
+                    tween(textbox.UIStroke, 0.3, {Color = Color3.fromRGB(24, 25, 30)})
+                    callback(textbox.Text)
+                end)
 
-    b1.MouseEnter:Connect(function()
-        showTooltip(tooltip)
-    end)
-    b1.MouseLeave:Connect(function()
-        hideTooltip()
-    end)
-
-    container.Size = UDim2.new(1, 0, 0, sectionSize(bg));
-    bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30);
-    order = order + 1;
-end
-
+                b1.MouseEnter:Connect(function()
+                    showTooltip(tooltip)
+                end)
+                b1.MouseLeave:Connect(function()
+                    hideTooltip()
+                end)
+                container.Size = UDim2.new(1, 0, 0, sectionSize(bg));
+                bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30);
+                order = order + 1;
+            end
 
             function components:AddDropdown(dropdownText, tooltip, items, default, callback)
-    local ee = {}
-    tooltip = tooltip or nil
-    items = items or {}
-    default = default or ""
-    callback = callback or function() end
-    local dropdownOpen = false
-    local b1 = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(1, 0, 0, 30),
-        Parent = container,
-        LayoutOrder = order,
-        ClipsDescendants = true
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0, 8),
-            Size = UDim2.new(1, -10, 0, 14),
-            Font = window.Font,
-            Text = dropdownText,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-    })
+                local ee = {}
+                tooltip = tooltip or nil
+                items = items or {}
+                default = default or ""
+                callback = callback or function() end
+                local dropdownOpen = false
+                local b1 = Create("Frame", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(1, 0, 0, 30),
+                    Parent = container,
+                    LayoutOrder = order,
+                    ClipsDescendants = true
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color = Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    }),
+                    Create("TextLabel", {
+                        BackgroundTransparency = 1,
+                        Position = UDim2.new(0, 10, 0, 8),
+                        Size = UDim2.new(1, -10, 0, 14),
+                        Font = window.Font,
+                        Text = dropdownText,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left
+                    })
+                })
+                local textbox = Create("TextBox", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(0, 150, 0, 24),
+                    Position = UDim2.new(1, -185, 0, 3),
+                    Parent = b1,
+                    Font = window.Font,
+                    Text = default,
+                    PlaceholderText = "...",
+                    TextColor3 = Color3.new(1, 1, 1),
+                    TextSize = 14,
+                    TextWrapped = true,
+                    TextEditable = false
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color =Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    })
+                })
+
+                local dropdownTog = Create("ImageButton", {
+                    BackgroundTransparency = 1,
+                    Image = "",
+                    Position = UDim2.new(1, -30, 0, 3),
+                    Size = UDim2.new(0, 24, 0, 24),
+                    Parent = b1
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color =Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    })
+                })
+            
+                local dropdownIcon = Create("ImageLabel", {
+                    BackgroundTransparency = 1,
+                    Image = "http://www.roblox.com/asset/?id=6031094670",
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Rotation = 270,
+                    Parent = dropdownTog
+                })
+
+                local dropdownContainer = Create("ScrollingFrame", {
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0,
+                    Size = UDim2.new(1, -4, 1, -32),
+                    CanvasSize = UDim2.new(0, 0, 0, 0),
+                    ScrollBarImageColor3 = Color3.fromRGB(42, 43, 53),
+                    BottomImage = "",
+                    TopImage = "",
+                    ScrollBarThickness = 6,
+                    VerticalScrollBarInset = 1,
+                    Parent = b1,
+                    Position = UDim2.new(0, 2, 0, 32)
+                }, {
+                    Create("UIListLayout", {
+                        Padding = UDim.new(0, 5)
+                    }),
+                    Create("UIPadding", {
+                        PaddingLeft = UDim.new(0, 5),
+                        PaddingRight = UDim.new(0, 5),
+                        PaddingTop = UDim.new(0, 5),
+                        PaddingBottom = UDim.new(0, 5)
+                    })
+                })
 
                 dropdownTog.MouseButton1Click:Connect(function()
                     dropdownOpen = not dropdownOpen;
@@ -907,74 +920,66 @@ end
                 order = order + 1;
                 return ee;
             end
-function components:AddSlider(boxTitle, tooltip, minValue, maxValue, default, precise, callback)
-    local t1 = {}
-    precise = precise or false
-    tooltip = tooltip or nil
-    minValue = minValue or 0
-    maxValue = maxValue or 1
-    default = default or 0
-    callback = callback or function() end
-    local valuee = 0;
-    local b1 = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(1, 0, 0, 30),
-        Parent = container,
-        LayoutOrder = order
-    }, {
-        Create("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 150, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 220, 255))
-            }),
-            Rotation = 45
-        }),
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color = Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(0, 4)
-        }),
-        Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0.5, -8),
-            Size = UDim2.new(1, -10, 0, 14),
-            Font = window.Font,
-            Text = boxTitle,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-    })
 
-    local sliderBg = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-        Size = UDim2.new(0, 150, 0, 12),
-        Position = UDim2.new(1, -155, 0.5, -6),
-        Parent = b1,
-        ClipsDescendants = true
-    }, {
-        Create("UIStroke", {
-            ApplyStrokeMode = 1,
-            Color =Color3.fromRGB(24, 25, 30)
-        }),
-        Create("UICorner", {
-            CornerRadius = UDim.new(1, 0)
-        })
-    })
+            function components:AddSlider(boxTitle, tooltip, minValue, maxValue, default, precise, callback)
+                local t1 = {}
+                precise = precise or false
+                tooltip = tooltip or nil
+                minValue = minValue or 0
+                maxValue = maxValue or 1
+                default = default or 0
+                callback = callback or function() end
+                local valuee = 0;
+                local b1 = Create("Frame", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(1, 0, 0, 30),
+                    Parent = container,
+                    LayoutOrder = order
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color = Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(0, 4)
+                    }),
+                    Create("TextLabel", {
+                        BackgroundTransparency = 1,
+                        Position = UDim2.new(0, 10, 0.5, -8),
+                        Size = UDim2.new(1, -10, 0, 14),
+                        Font = window.Font,
+                        Text = boxTitle,
+                        TextColor3 = Color3.new(1, 1, 1),
+                        TextSize = 14,
+                        TextXAlignment = Enum.TextXAlignment.Left
+                    })
+                })
 
-    local sliderVal = Create("Frame", {
-        BackgroundColor3 = window.AccentColor,
-        Size = UDim2.new(default / maxValue, 0, 1, 0),
-        Parent = sliderBg
-    }, {
-        Create("UICorner", {
-            CornerRadius = UDim.new(1, 0)
-        })
-    })
+                local sliderBg = Create("Frame", {
+                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
+                    Size = UDim2.new(0, 150, 0, 12),
+                    Position = UDim2.new(1, -155, 0.5, -6),
+                    Parent = b1,
+                    ClipsDescendants = true
+                }, {
+                    Create("UIStroke", {
+                        ApplyStrokeMode = 1,
+                        Color =Color3.fromRGB(24, 25, 30)
+                    }),
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(1, 0)
+                    })
+                })
 
+                local sliderVal = Create("Frame", {
+                    BackgroundColor3 = window.AccentColor,
+                    Size = UDim2.new(default / maxValue, 0, 1, 0),
+                    Parent = sliderBg
+                }, {
+                    Create("UICorner", {
+                        CornerRadius = UDim.new(1, 0)
+                    })
+                })
 
                 local draggingg = false;
                 local function move(input)
