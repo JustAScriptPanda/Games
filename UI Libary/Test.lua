@@ -33,7 +33,6 @@ function tween(instance, time, properties, callback)
 end
 
 local GUI = game.CoreGui:FindFirstChild("FluxHub")
-local GUI = game.CoreGui:FindFirstChild("FluxHub")
 if not GUI then return end
 
 local TARGET_RED = Color3.fromRGB(255,85,85)
@@ -94,9 +93,7 @@ local function watchObject(obj)
 	if not obj then return end
 	pcall(function()
 		for _, prop in ipairs(watchedProps) do
-			if obj:GetAttribute("_color_watcher_"..prop) then
-
-			else
+			if not obj:GetAttribute("_color_watcher_"..prop) then
 				obj:SetAttribute("_color_watcher_"..prop, true)
 				if obj:GetPropertyChangedSignal and obj[prop] ~= nil then
 					obj:GetPropertyChangedSignal(prop):Connect(function()
@@ -132,7 +129,7 @@ coroutine.wrap(function()
 	while task.wait(0.08) do
 		for _,o in ipairs(GUI:GetDescendants()) do
 			if o:IsA("UIGradient") then
-				o.Rotation = (o.Rotation + 10) % 360
+				o.Rotation = (o.Rotation + 1) % 360
 			end
 		end
 	end
