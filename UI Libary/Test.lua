@@ -1,10 +1,11 @@
+
 local lib = {};
-local UIS = game:GetService("UserInputService");
-local TS = game:GetService("TweenService");
-local RS = game:GetService("RunService");
+local UIS = cloneref(game:GetService("UserInputService"));
+local TS = cloneref(game:GetService("TweenService"));
+local RS = cloneref(game:GetService("RunService"));
 local LP = game:GetService("Players").LocalPlayer;
 local Mouse = LP:GetMouse();
-local TextService = game:GetService("TextService")
+local TextService = cloneref(game:GetService("TextService"))
 
 local GUI = Instance.new("ScreenGui");
 GUI.Name = "FluxHub";
@@ -83,7 +84,7 @@ task.spawn(function()
     while task.wait(0.1) do
         for _, obj in ipairs(GUI:GetDescendants()) do
             if obj:IsA("UIGradient") then
-                obj.Rotation = (obj.Rotation + 1) % 360
+                obj.Rotation = (obj.Rotation + 5) % 360
             end
         end
     end
