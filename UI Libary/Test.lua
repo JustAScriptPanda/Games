@@ -36,10 +36,11 @@ local GUI = game.CoreGui:FindFirstChild("FluxHub")
 if not GUI then return end
 
 local gradientColors = {
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 180, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 255))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 80)),   
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 30, 30)), 
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 100))  
 }
+
 
 local function applyGradient(obj)
     if obj:IsA("UIGradient") then return end
