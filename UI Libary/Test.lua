@@ -36,57 +36,75 @@ local GUI = game.CoreGui:FindFirstChild("FluxHub")
 if not GUI then return end
 
 local gradientColors = {
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 180, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 255))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 180, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 255))
 }
 
 local function applyGradient(obj)
-    if obj:IsA("UIGradient") then return end
-    local existing = obj:FindFirstChildOfClass("UIGradient")
-    if existing then existing:Destroy() end
-    local grad = Instance.new("UIGradient")
-    grad.Color = ColorSequence.new(gradientColors)
-    grad.Rotation = math.random(0, 360)
-    grad.Parent = obj
+	if obj:IsA("UIGradient") then return end
+	local existing = obj:FindFirstChildOfClass("UIGradient")
+	if existing then existing:Destroy() end
+	local grad = Instance.new("UIGradient")
+	grad.Color = ColorSequence.new(gradientColors)
+	grad.Rotation = math.random(0, 360)
+	grad.Parent = obj
+end
+
+local function hasKeyword(str)
+	if not str then return false end
+	str = string.lower(str)
+	return string.find(str, "icon") or string.find(str, "toggle") or string.find(str, "check")
+		or string.find(str, "image") or string.find(str, "arrow") or string.find(str, "indicator")
 end
 
 local function recolor(obj)
-    if not obj or obj:IsA("UIGradient") then return end
-    pcall(function()
-        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-            obj.TextColor3 = Color3.fromRGB(255, 255, 255)
-            applyGradient(obj)
-        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-            obj.ImageColor3 = Color3.fromRGB(0, 200, 255)
-        elseif obj:IsA("Frame") then
-            obj.BackgroundColor3 = Color3.fromRGB(10, 15, 20)
-        elseif obj:IsA("UIStroke") then
-            obj.Color = Color3.fromRGB(0, 220, 255)
-        elseif obj:IsA("ScrollingFrame") then
-            obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
-        end
-    end)
+	if not obj or obj:IsA("UIGradient") then return end
+	pcall(function()
+		if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+			obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+			applyGradient(obj)
+		elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+			if hasKeyword(obj.Name) then
+				obj.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			else
+				obj.ImageColor3 = Color3.fromRGB(0, 200, 255)
+			end
+		elseif obj:IsA("Frame") then
+			obj.BackgroundColor3 = Color3.fromRGB(15, 20, 25)
+		elseif obj:IsA("UIStroke") then
+			obj.Color = Color3.fromRGB(0, 220, 255)
+		elseif obj:IsA("ScrollingFrame") then
+			obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
+		end
+	end)
+end
+
+local function recolorAsync(obj)
+	coroutine.wrap(function()
+		recolor(obj)
+	end)()
 end
 
 for _, obj in ipairs(GUI:GetDescendants()) do
-    recolor(obj)
+	recolorAsync(obj)
 end
 
 GUI.DescendantAdded:Connect(function(obj)
-    task.wait(0.05)
-    recolor(obj)
+	task.wait(0.05)
+	recolorAsync(obj)
 end)
 
-task.spawn(function()
-    while task.wait(0.1) do
-        for _, obj in ipairs(GUI:GetDescendants()) do
-            if obj:IsA("UIGradient") then
-                obj.Rotation = (obj.Rotation + 1) % 360
-            end
-        end
-    end
-end)
+coroutine.wrap(function()
+	while task.wait(0.1) do
+		for _, obj in ipairs(GUI:GetDescendants()) do
+			if obj:IsA("UIGradient") then
+				obj.Rotation = (obj.Rotation + 1) % 360
+			end
+		end
+	end
+end)()
+
 
 
 function lib:CreateWindow(title)
