@@ -242,7 +242,7 @@ function lib:CreateWindow(title)
                 end)
             end)
         end
-        --tween(MainFrame, 0.5, {Size = hidden and UDim2.new(0, 600, 0, 27) or UDim2.new(0, 600, 0, 300)})
+        tween(MainFrame, 0.5, {Size = hidden and UDim2.new(0, 600, 0, 27) or UDim2.new(0, 600, 0, 300)})
     end)
 
     local Container = Create("Frame", {
