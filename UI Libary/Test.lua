@@ -208,7 +208,7 @@ function lib:CreateWindow(title)
 
     local ToggleButton = Create("ImageButton", {
         BackgroundTransparency = 1,
-        Image = "http://www.roblox.com/asset/?id=3435969025",
+        Image = "",
         Position = UDim2.new(1, -25, 0, 0),
         Size = UDim2.new(0, 25, 0, 25),
         Parent = MainFrame
@@ -216,7 +216,7 @@ function lib:CreateWindow(title)
 
     local toggleIcon = Create("ImageLabel", {
         BackgroundTransparency = 1,
-        Image = "http://www.roblox.com/asset/?id=3435969025",
+        Image = "http://www.roblox.com/asset/?id=6031094670",
         Size = UDim2.new(1, 0, 1, 0),
         Rotation = 90,
         Parent = ToggleButton
