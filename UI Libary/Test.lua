@@ -51,15 +51,16 @@ local function applyGradient(obj)
     grad.Parent = obj
 end
 
-local function applyColorsTo(obj)
+local function recolor(obj)
     if not obj or obj:IsA("UIGradient") then return end
     pcall(function()
         if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
             obj.TextColor3 = Color3.fromRGB(255, 255, 255)
             applyGradient(obj)
-        elseif obj:IsA("Frame") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            obj.ImageColor3 = Color3.fromRGB(0, 200, 255)
+        elseif obj:IsA("Frame") then
             obj.BackgroundColor3 = Color3.fromRGB(10, 15, 20)
-            applyGradient(obj)
         elseif obj:IsA("UIStroke") then
             obj.Color = Color3.fromRGB(0, 220, 255)
         elseif obj:IsA("ScrollingFrame") then
@@ -69,16 +70,16 @@ local function applyColorsTo(obj)
 end
 
 for _, obj in ipairs(GUI:GetDescendants()) do
-    applyColorsTo(obj)
+    recolor(obj)
 end
 
 GUI.DescendantAdded:Connect(function(obj)
     task.wait(0.05)
-    applyColorsTo(obj)
+    recolor(obj)
 end)
 
 task.spawn(function()
-    while task.wait() do
+    while task.wait(0.1) do
         for _, obj in ipairs(GUI:GetDescendants()) do
             if obj:IsA("UIGradient") then
                 obj.Rotation = (obj.Rotation + 1) % 360
@@ -86,6 +87,7 @@ task.spawn(function()
         end
     end
 end)
+
 
 function lib:CreateWindow(title)
     local window = {
