@@ -1,10 +1,10 @@
 local lib = {};
-local UIS = game:GetService("UserInputService");
-local TS = game:GetService("TweenService");
-local RS = game:GetService("RunService");
+local UIS = cloneref(game:GetService("UserInputService"));
+local TS = cloneref(game:GetService("TweenService"));
+local RS = cloneref(game:GetService("RunService"));
 local LP = game:GetService("Players").LocalPlayer;
 local Mouse = LP:GetMouse();
-local TextService = game:GetService("TextService")
+local TextService = cloneref(game:GetService("TextService"))
 
 local GUI = Instance.new("ScreenGui");
 GUI.Name = "FluxHub";
@@ -31,110 +31,6 @@ function tween(instance, time, properties, callback)
         callback()
     end)
 end
-
-local GUI = game.CoreGui:FindFirstChild("FluxHub")
-if not GUI then return end
-
-local TARGET_RED = Color3.fromRGB(255,85,85)
-local REPLACE_COLOR = Color3.fromRGB(0,200,255)
-local REPLACE_STROKE = Color3.fromRGB(0,220,255)
-local gradientColors = {
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,150)),
-	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,180,255)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(0,100,255))
-}
-
-local function approxEqual(a,b,t)
-	t = t or 0.03
-	return math.abs(a.r-b.r) <= t and math.abs(a.g-b.g) <= t and math.abs(a.b-b.b) <= t
-end
-
-local function applyGradient(obj)
-	if not obj or obj:IsA("UIGradient") then return end
-	local ex = obj:FindFirstChildOfClass("UIGradient")
-	if ex then ex:Destroy() end
-	local g = Instance.new("UIGradient")
-	g.Color = ColorSequence.new(gradientColors)
-	g.Rotation = math.random(0,360)
-	g.Parent = obj
-end
-
-local function fixColorProperty(obj, prop, val)
-	if typeof(val) ~= "Color3" then return end
-	if approxEqual(val, TARGET_RED) then
-		if prop == "Color" or prop == "ImageColor3" then
-			if obj:IsA("UIStroke") then
-				obj.Color = REPLACE_STROKE
-			else
-				obj[prop] = REPLACE_COLOR
-			end
-		elseif prop == "BackgroundColor3" then
-			obj.BackgroundColor3 = Color3.fromRGB(15,20,25)
-		elseif prop == "TextColor3" then
-			obj.TextColor3 = Color3.fromRGB(255,255,255)
-			applyGradient(obj)
-		elseif prop == "ScrollBarImageColor3" then
-			obj.ScrollBarImageColor3 = REPLACE_STROKE
-		else
-			obj[prop] = REPLACE_COLOR
-		end
-	end
-end
-
-local watchedProps = {
-	"ImageColor3",
-	"BackgroundColor3",
-	"TextColor3",
-	"Color",
-	"ScrollBarImageColor3"
-}
-
-local function watchObject(obj)
-	if not obj then return end
-	pcall(function()
-		for _, prop in ipairs(watchedProps) do
-			if not obj:GetAttribute("_color_watcher_"..prop) then
-				obj:SetAttribute("_color_watcher_"..prop, true)
-				if obj:GetPropertyChangedSignal and obj[prop] ~= nil then
-					obj:GetPropertyChangedSignal(prop):Connect(function()
-						local ok, val = pcall(function() return obj[prop] end)
-						if ok then fixColorProperty(obj, prop, val) end
-					end)
-				end
-			end
-			local ok, cur = pcall(function() return obj[prop] end)
-			if ok and cur then
-				fixColorProperty(obj, prop, cur)
-			end
-		end
-		if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-			applyGradient(obj)
-		end
-	end)
-end
-
-for _,o in ipairs(GUI:GetDescendants()) do
-	watchObject(o)
-end
-
-GUI.DescendantAdded:Connect(function(o)
-	task.wait(0.03)
-	watchObject(o)
-	for _,c in ipairs(o:GetDescendants()) do
-		watchObject(c)
-	end
-end)
-
-coroutine.wrap(function()
-	while task.wait(0.08) do
-		for _,o in ipairs(GUI:GetDescendants()) do
-			if o:IsA("UIGradient") then
-				o.Rotation = (o.Rotation + 1) % 360
-			end
-		end
-	end
-end)()
-
 
 function lib:CreateWindow(title)
     local window = {
