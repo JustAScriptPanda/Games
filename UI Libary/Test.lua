@@ -1,4 +1,4 @@
-
+-- Test UI
 local lib = {};
 local UIS = cloneref(game:GetService("UserInputService"));
 local TS = cloneref(game:GetService("TweenService"));
@@ -33,15 +33,14 @@ function tween(instance, time, properties, callback)
     end)
 end
 
-local GUI = game.CoreGui:FindFirstChild("FluxHub")
-if not GUI then return end
-
 local gradientColors = {
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 80)),   
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 30, 30)), 
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 100))  
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 30)),
+    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 30, 60)),
+    ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 50, 90)),
+    ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 80, 120)),
+    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 100, 140)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 130, 160))
 }
-
 
 local function applyGradient(obj)
     if obj:IsA("UIGradient") then return end
@@ -57,16 +56,18 @@ local function recolor(obj)
     if not obj or obj:IsA("UIGradient") then return end
     pcall(function()
         if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-            obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+            obj.TextColor3 = Color3.fromRGB(255, 60, 100)
             applyGradient(obj)
         elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-            obj.ImageColor3 = Color3.fromRGB(0, 200, 255)
-        elseif obj:IsA("Frame") then
-            obj.BackgroundColor3 = Color3.fromRGB(10, 15, 20)
+            obj.ImageColor3 = Color3.fromRGB(255, 60, 100)
+            applyGradient(obj)
+        elseif obj:IsA("Frame") or obj:IsA("ScrollingFrame") then
+            obj.BackgroundColor3 = Color3.fromRGB(25, 0, 10)
+            applyGradient(obj)
         elseif obj:IsA("UIStroke") then
-            obj.Color = Color3.fromRGB(0, 220, 255)
+            obj.Color = Color3.fromRGB(255, 40, 80)
         elseif obj:IsA("ScrollingFrame") then
-            obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
+            obj.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 90)
         end
     end)
 end
@@ -81,7 +82,7 @@ GUI.DescendantAdded:Connect(function(obj)
 end)
 
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.05) do
         for _, obj in ipairs(GUI:GetDescendants()) do
             if obj:IsA("UIGradient") then
                 obj.Rotation = (obj.Rotation + 5) % 360
@@ -89,7 +90,6 @@ task.spawn(function()
         end
     end
 end)
-
 
 function lib:CreateWindow(title)
     local window = {
