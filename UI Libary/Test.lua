@@ -92,8 +92,8 @@ end)
 
 function lib:CreateWindow(title)
     local window = {
-        Font = Enum.Font.RobotoMono,
-        AccentColor = Color3.fromRGB(255, 85, 85)
+        Font = Enum.Font.Arcade,
+        Color = Color3.fromRGB(255, 85, 85)
     }
     local hidden = false;
 
