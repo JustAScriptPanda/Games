@@ -1,10 +1,10 @@
 local lib = {};
-local UIS = cloneref(game:GetService("UserInputService"));
-local TS = cloneref(game:GetService("TweenService"));
-local RS = cloneref(game:GetService("RunService"));
+local UIS = game:GetService("UserInputService");
+local TS = game:GetService("TweenService");
+local RS = game:GetService("RunService");
 local LP = game:GetService("Players").LocalPlayer;
 local Mouse = LP:GetMouse();
-local TextService = cloneref(game:GetService("TextService"))
+local TextService = game:GetService("TextService")
 
 local GUI = Instance.new("ScreenGui");
 GUI.Name = "FluxHub";
@@ -32,9 +32,66 @@ function tween(instance, time, properties, callback)
     end)
 end
 
+local GUI = game.CoreGui:FindFirstChild("FluxHub")
+if not GUI then return end
+
+local gradientColors = {
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 150)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 180, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 255))
+}
+
+local function applyGradient(obj)
+    if obj:IsA("UIGradient") then return end
+    local existing = obj:FindFirstChildOfClass("UIGradient")
+    if existing then existing:Destroy() end
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new(gradientColors)
+    grad.Rotation = math.random(0, 360)
+    grad.Parent = obj
+end
+
+local function recolor(obj)
+    if not obj or obj:IsA("UIGradient") then return end
+    pcall(function()
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+            obj.TextColor3 = Color3.fromRGB(255, 255, 255)
+            applyGradient(obj)
+        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            obj.ImageColor3 = Color3.fromRGB(0, 200, 255)
+        elseif obj:IsA("Frame") then
+            obj.BackgroundColor3 = Color3.fromRGB(10, 15, 20)
+        elseif obj:IsA("UIStroke") then
+            obj.Color = Color3.fromRGB(0, 220, 255)
+        elseif obj:IsA("ScrollingFrame") then
+            obj.ScrollBarImageColor3 = Color3.fromRGB(0, 220, 255)
+        end
+    end)
+end
+
+for _, obj in ipairs(GUI:GetDescendants()) do
+    recolor(obj)
+end
+
+GUI.DescendantAdded:Connect(function(obj)
+    task.wait(0.05)
+    recolor(obj)
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        for _, obj in ipairs(GUI:GetDescendants()) do
+            if obj:IsA("UIGradient") then
+                obj.Rotation = (obj.Rotation + 1) % 360
+            end
+        end
+    end
+end)
+
+
 function lib:CreateWindow(title)
     local window = {
-        Font = Enum.Font.Arcade,
+        Font = Enum.Font.RobotoMono,
         AccentColor = Color3.fromRGB(255, 85, 85)
     }
     local hidden = false;
@@ -99,7 +156,7 @@ function lib:CreateWindow(title)
             Size = UDim2.new(1, -20, 0, 25),
             Position = UDim2.new(0, 25, 0, 1),
             Text = title,
-            Font = window.Font,
+            Font = Enum.Font.Roboto,
             TextColor3 = Color3.fromRGB(243, 243, 243),
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left
@@ -150,7 +207,7 @@ function lib:CreateWindow(title)
 
     local ToggleButton = Create("ImageButton", {
         BackgroundTransparency = 1,
-        Image = "",
+        Image = "http://www.roblox.com/asset/?id=3435969025",
         Position = UDim2.new(1, -25, 0, 0),
         Size = UDim2.new(0, 25, 0, 25),
         Parent = MainFrame
@@ -158,7 +215,7 @@ function lib:CreateWindow(title)
 
     local toggleIcon = Create("ImageLabel", {
         BackgroundTransparency = 1,
-        Image = "http://www.roblox.com/asset/?id=6031094670",
+        Image = "http://www.roblox.com/asset/?id=3435969025",
         Size = UDim2.new(1, 0, 1, 0),
         Rotation = 90,
         Parent = ToggleButton
