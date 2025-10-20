@@ -99,7 +99,7 @@ function lib:CreateWindow(title)
             Size = UDim2.new(1, -20, 0, 25),
             Position = UDim2.new(0, 25, 0, 1),
             Text = title,
-            Font = Enum.Font.Roboto,
+            Font = window.Font,
             TextColor3 = Color3.fromRGB(243, 243, 243),
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left
