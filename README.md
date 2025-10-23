@@ -9,4 +9,4 @@
   1. Littlest Pet Shop (Update : 7/3/2025)
      [Game](https://www.roblox.com/games/15536298749/Littlest-Pet-Shop)
      ```luau
-loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/UGC%20Games/15536298749.lua"))()```
+loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/UGC%20Games/15536298749.lua"))()
