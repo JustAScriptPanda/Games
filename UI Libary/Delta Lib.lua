@@ -1,4 +1,3 @@
--- DeltaLib UI Library - Improved with error handling and smaller UI
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -306,7 +305,7 @@ function DeltaLib:CreateWindow(title, size)
     LeftScrollButton.Position = UDim2.new(0, 0, 0, 0)
     LeftScrollButton.BackgroundColor3 = Colors.DarkBackground
     LeftScrollButton.BorderSizePixel = 0
-    LeftScrollButton.Text = "â†"
+    LeftScrollButton.Text = "<"
     LeftScrollButton.TextColor3 = Colors.Text
     LeftScrollButton.TextSize = 14 -- Smaller text size
     LeftScrollButton.Font = Enum.Font.GothamBold
@@ -320,7 +319,7 @@ function DeltaLib:CreateWindow(title, size)
     RightScrollButton.Position = UDim2.new(1, -20, 0, 0)
     RightScrollButton.BackgroundColor3 = Colors.DarkBackground
     RightScrollButton.BorderSizePixel = 0
-    RightScrollButton.Text = "â†’"
+    RightScrollButton.Text = ">’"
     RightScrollButton.TextColor3 = Colors.Text
     RightScrollButton.TextSize = 14 -- Smaller text size
     RightScrollButton.Font = Enum.Font.GothamBold
