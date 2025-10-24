@@ -1,12 +1,13 @@
 -- DeltaLib UI Library - Improved with error handling and smaller UI
 local DeltaLib = {}
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
+local cloneref = cloneref or function(...) return ... end
+local UserInputService = cloneref(game:GetService("UserInputService"))
+local TweenService = cloneref(game:GetService("TweenService"))
+local Players = cloneref(game:GetService("Players"))
 local Player = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local TextService = game:GetService("TextService")
-local CoreGui = game:GetService("CoreGui")
+local RunService = cloneref(game:GetService("RunService"))
+local TextService = cloneref(game:GetService("TextService"))
+local CoreGui = cloneref(game:GetService("CoreGui"))
 
 -- Helper functions for error handling
 local function SafeCall(func, ...)
@@ -248,7 +249,7 @@ function DeltaLib:CreateWindow(title, size)
     MinimizeButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
     MinimizeButton.Position = UDim2.new(1, -45, 0, 2) -- Position it to the left of the close button
     MinimizeButton.BackgroundTransparency = 1
-    MinimizeButton.Text = "âˆ’" -- Minus symbol
+    MinimizeButton.Text = "-" -- Minus symbol
     MinimizeButton.TextColor3 = Colors.Text
     MinimizeButton.TextSize = 14 -- Smaller text size
     MinimizeButton.Font = Enum.Font.GothamBold
@@ -268,7 +269,7 @@ function DeltaLib:CreateWindow(title, size)
     CloseButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
     CloseButton.Position = UDim2.new(1, -22, 0, 2)
     CloseButton.BackgroundTransparency = 1
-    CloseButton.Text = "âœ•"
+    CloseButton.Text = "X"
     CloseButton.TextColor3 = Colors.Text
     CloseButton.TextSize = 14 -- Smaller text size
     CloseButton.Font = Enum.Font.GothamBold
@@ -519,7 +520,7 @@ function DeltaLib:CreateWindow(title, size)
             end)
             
             -- Change restore button back to minimize symbol
-            MinimizeButton.Text = "âˆ’"
+            MinimizeButton.Text = "-"
         end
     end)
     
