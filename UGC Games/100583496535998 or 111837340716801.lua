@@ -1,4 +1,5 @@
 -- nothing came wrong yup :/ made by Velocity x 
+if game.PlaceId == 111837340716801 or game.PlaceId == 100583496535998 then
 local success, PromptLib = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/UI%20Libary/Prompt%20Roblox%20Error%20Lib.lua"))()
 end)
@@ -35,4 +36,5 @@ if success and PromptLib then
     )
 else
     warn("Failed to load PromptLib.")
+end
 end
