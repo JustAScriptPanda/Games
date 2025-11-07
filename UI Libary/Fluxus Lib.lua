@@ -1,11 +1,12 @@
--- Test UI
+-- Last Updated 04/02/2022
+
 local lib = {};
-local UIS = cloneref(game:GetService("UserInputService"));
-local TS = cloneref(game:GetService("TweenService"));
-local RS = cloneref(game:GetService("RunService"));
+local UIS = game:GetService("UserInputService");
+local TS = game:GetService("TweenService");
+local RS = game:GetService("RunService");
 local LP = game:GetService("Players").LocalPlayer;
 local Mouse = LP:GetMouse();
-local TextService = cloneref(game:GetService("TextService"))
+local TextService = game:GetService("TextService")
 
 local GUI = Instance.new("ScreenGui");
 GUI.Name = "FluxHub";
@@ -33,74 +34,10 @@ function tween(instance, time, properties, callback)
     end)
 end
 
-local gradientColors = {
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 30)),
-	ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 30, 60)),
-	ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 50, 90)),
-	ColorSequenceKeypoint.new(0.6, Color3.fromRGB(255, 80, 120)),
-	ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 100, 140)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 130, 160))
-}
-
-local function applyGradient(obj)
-	if obj:IsA("UIGradient") or obj.Name == "TitleIcon" then
-		return
-	end
-	if not (obj:IsA("Frame") or obj:IsA("TextLabel") or obj:IsA("TextButton")
-		or obj:IsA("TextBox") or obj:IsA("ImageLabel") or obj:IsA("ImageButton")) then
-		return
-	end
-	local existing = obj:FindFirstChildOfClass("UIGradient")
-	if existing then existing:Destroy() end
-	local grad = Instance.new("UIGradient")
-	grad.Color = ColorSequence.new(gradientColors)
-	grad.Rotation = math.random(0, 360)
-	grad.Parent = obj
-end
-
-local function recolor(obj)
-	if not obj or obj:IsA("UIGradient") or obj.Name == "TitleIcon" then return end
-	pcall(function()
-		if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-			obj.TextColor3 = Color3.fromRGB(255, 60, 100)
-			applyGradient(obj)
-		elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-			obj.ImageColor3 = Color3.fromRGB(255, 60, 100)
-			applyGradient(obj)
-		elseif obj:IsA("Frame") or obj:IsA("ScrollingFrame") then
-			obj.BackgroundColor3 = Color3.fromRGB(25, 0, 10)
-			applyGradient(obj)
-		elseif obj:IsA("UIStroke") then
-			obj.Color = Color3.fromRGB(255, 40, 80)
-		elseif obj:IsA("ScrollingFrame") then
-			obj.ScrollBarImageColor3 = Color3.fromRGB(255, 50, 90)
-		end
-	end)
-end
-
-for _, obj in ipairs(GUI:GetDescendants()) do
-	recolor(obj)
-end
-
-GUI.DescendantAdded:Connect(function(obj)
-	task.wait(0.05)
-	recolor(obj)
-end)
-
-task.spawn(function()
-	while task.wait() do
-		for _, obj in ipairs(GUI:GetDescendants()) do
-			if obj:IsA("UIGradient") then
-				obj.Rotation = (obj.Rotation + 2) % 360
-			end
-		end
-	end
-end)
-
 function lib:CreateWindow(title)
     local window = {
-        Font = Enum.Font.Arcade,
-        Color = Color3.fromRGB(255, 85, 85)
+        Font = Enum.Font.RobotoMono,
+        AccentColor = Color3.fromRGB(255, 85, 85)
     }
     local hidden = false;
 
@@ -169,11 +106,10 @@ function lib:CreateWindow(title)
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left
     }), Create("ImageLabel", {
-        Name = "TitleIcon",
         Position = UDim2.new(0, 3, 0, 3),
         Size = UDim2.new(0, 20, 0, 20),
         BackgroundTransparency = 1,
-        Image = "rbxassetid://117796620488930"
+        Image = "rbxassetid://9483813933"
     }), Create("UICorner", {
         CornerRadius = UDim.new(0, 3)
     })})
@@ -251,7 +187,7 @@ function lib:CreateWindow(title)
                 end)
             end)
         end
-        -- tween(MainFrame, 0.5, {Size = hidden and UDim2.new(0, 600, 0, 27) or UDim2.new(0, 600, 0, 300)})
+        --tween(MainFrame, 0.5, {Size = hidden and UDim2.new(0, 600, 0, 27) or UDim2.new(0, 600, 0, 300)})
     end)
 
     local Container = Create("Frame", {
