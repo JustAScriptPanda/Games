@@ -770,6 +770,8 @@ function DeltaLib:CreateWindow(title, size)
 				end)
 
 				local ButtonFunctions = {}
+				ButtonFunctions.Object = ButtonContainer
+				
 
 				function ButtonFunctions:SetText(newText)
 					pcall(function()
@@ -861,6 +863,8 @@ function DeltaLib:CreateWindow(title, size)
 				end)
 
 				local ToggleFunctions = {}
+				ToggleFunctions.Object = ToggleContainer
+				
 
 				function ToggleFunctions:SetState(state)
 					Enabled = state
@@ -994,6 +998,8 @@ function DeltaLib:CreateWindow(title, size)
 				end)
 
 				local SliderFunctions = {}
+				SliderFunctions.Object = SliderContainer
+				
 
 				function SliderFunctions:SetValue(value)
 					UpdateSlider(value)
@@ -1008,6 +1014,7 @@ function DeltaLib:CreateWindow(title, size)
 
 			function Section:AddDropdown(dropdownText, options, default, callback)
     local DropdownFunctions = {}
+    DropdownFunctions.Object = DropdownContainer
     options = options or {}
     default = default or options[1] or ""
     callback = callback or function() end
@@ -1349,6 +1356,7 @@ end
 				end)
 
 				local TextBoxFunctions = {}
+				TextBoxFunctions.Object = TextBoxContainer
 
 				function TextBoxFunctions:SetText(text)
 					pcall(function()
