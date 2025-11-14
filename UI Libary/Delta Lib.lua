@@ -1,4 +1,3 @@
---DeltaLib UI Library - Improved with error handling and smaller UI
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -1013,7 +1012,6 @@ function DeltaLib:CreateWindow(title, size)
     default = default or options[1] or ""
     callback = callback or function() end
 
-    -- Create the main dropdown container
     local DropdownContainer = Instance.new("Frame")
     DropdownContainer.Name = "DropdownContainer"
     DropdownContainer.Size = UDim2.new(1, 0, 0, 40)
@@ -1078,12 +1076,12 @@ function DeltaLib:CreateWindow(title, size)
     local DropdownList = Instance.new("Frame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 45) 
+    DropdownList.Position = UDim2.new(0, 0, 0, 45)
     DropdownList.BackgroundColor3 = Colors.DarkBackground
     DropdownList.BorderSizePixel = 0
-    DropdownList.Visible = false 
-    DropdownList.ZIndex = 999999  -- FIX: always on top
-    DropdownList.ClipsDescendants = false -- FIX: prevent split cutoff
+    DropdownList.Visible = false
+    DropdownList.ZIndex = 999999
+    DropdownList.ClipsDescendants = false
     DropdownList.Parent = DropdownContainer
 
     local DropdownListCorner = Instance.new("UICorner")
@@ -1106,7 +1104,7 @@ function DeltaLib:CreateWindow(title, size)
     DropdownScrollFrame.ScrollBarImageColor3 = Colors.NeonRed
     DropdownScrollFrame.BottomImage = ""
     DropdownScrollFrame.TopImage = ""
-    DropdownScrollFrame.ZIndex = 1000000 -- FIX: topmost
+    DropdownScrollFrame.ZIndex = 1000000
     DropdownScrollFrame.Parent = DropdownList
 
     local DropdownOptionsLayout = Instance.new("UIListLayout")
@@ -1121,10 +1119,6 @@ function DeltaLib:CreateWindow(title, size)
     DropdownOptionsPadding.PaddingBottom = UDim.new(0, 5)
     DropdownOptionsPadding.Parent = DropdownScrollFrame
 
-    ----------------------------------------------------------
-    -- FIXED BEHAVIOR BELOW
-    ----------------------------------------------------------
-
     local isOpen = false
     local isAnimating = false
 
@@ -1133,13 +1127,8 @@ function DeltaLib:CreateWindow(title, size)
         isAnimating = true
         isOpen = not isOpen
 
-        TweenService:Create(DropdownArrow, TweenInfo.new(0.3), {
-            Rotation = isOpen and 90 or 270
-        }):Play()
-
-        TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {
-            Color = isOpen and Colors.NeonRed or Colors.Border
-        }):Play()
+        TweenService:Create(DropdownArrow, TweenInfo.new(0.3), {Rotation = isOpen and 90 or 270}):Play()
+        TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = isOpen and Colors.NeonRed or Colors.Border}):Play()
 
         if isOpen then
             DropdownList.Visible = true
@@ -1194,20 +1183,21 @@ function DeltaLib:CreateWindow(title, size)
         OptionText.ZIndex = 1000002
         OptionText.Parent = OptionButton
 
-        OptionButton.MouseEnter:Connect(function()
-            TweenService:Create(OptionButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.NeonRed}):Play()
-        end)
+        OptionButton.MouseButton1Down:Connect(function()
+            if isAnimating then return end
+            isAnimating = true
 
-        OptionButton.MouseLeave:Connect(function()
-            TweenService:Create(OptionButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.DarkBackground}):Play()
-        end)
-
-        OptionButton.MouseButton1Click:Connect(function()
             SelectedTextBox.Text = option
-            callback(option)
+            task.spawn(function()
+                callback(option)
+            end)
 
-            task.defer(function()
-                ToggleDropdown() -- FIX: Proper mobile closing
+            task.delay(0.03, function()
+                ToggleDropdown()
+            end)
+
+            task.delay(0.15, function()
+                isAnimating = false
             end)
 
             TweenService:Create(OptionText, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {
@@ -1224,18 +1214,12 @@ function DeltaLib:CreateWindow(title, size)
 
     DropdownButton.MouseButton1Click:Connect(ToggleDropdown)
 
-    ----------------------------------------------------------
-    -- FIX CLICK OUTSIDE (mobile-friendly)
-    ----------------------------------------------------------
-
     local globalClickConnection
     globalClickConnection = UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1
-        and input.UserInputType ~= Enum.UserInputType.Touch then return end
-
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
         if not isOpen then return end
 
-        task.wait(0.05) -- FIX: allow touch to settle
+        task.wait(0.05)
 
         local mousePos = UserInputService:GetMouseLocation()
         local inButton = (
@@ -1263,22 +1247,6 @@ function DeltaLib:CreateWindow(title, size)
         end
     end)
 
-    DropdownButton.MouseEnter:Connect(function()
-        if not isOpen then
-            TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(100,100,100)}):Play()
-        end
-    end)
-
-    DropdownButton.MouseLeave:Connect(function()
-        if not isOpen then
-            TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = Colors.Border}):Play()
-        end
-    end)
-
-    ----------------------------------------------------------
-    -- RETURN FUNCTIONS
-    ----------------------------------------------------------
-
     function DropdownFunctions:SetValue(value)
         if table.find(options, value) then
             SelectedTextBox.Text = value
@@ -1305,7 +1273,6 @@ function DeltaLib:CreateWindow(title, size)
         end
 
         DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 10)
-
         SelectedTextBox.Text = default
 
         if isOpen then
@@ -1317,6 +1284,7 @@ function DeltaLib:CreateWindow(title, size)
 
     return DropdownFunctions
 end
+
 
 
 			-- TextBox Creation Function with error handling
