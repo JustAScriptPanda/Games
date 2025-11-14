@@ -1,4 +1,4 @@
-DeltaLib UI Library - Improved with error handling and smaller UI
+--DeltaLib UI Library - Improved with error handling and smaller UI
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
