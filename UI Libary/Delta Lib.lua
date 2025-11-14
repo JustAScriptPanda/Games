@@ -1,3 +1,4 @@
+-- DeltaLib UI Library - Improved with error handling and smaller UI
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -1006,8 +1007,7 @@ function DeltaLib:CreateWindow(title, size)
 				return SliderFunctions
 			end
 
-			function Section:AddDropdown(dropdownText, options, default, callback, MultiChoose)
-                MultiChoose = MultiChoose or false
+			function Section:AddDropdown(dropdownText, options, default, callback)
 				local DropdownFunctions = {}
 				options = options or {}
 				default = default or options[1] or ""
@@ -1227,31 +1227,15 @@ function DeltaLib:CreateWindow(title, size)
 					end)
 
 					OptionButton.MouseButton1Click:Connect(function()
-                    if MultiChoose then
-                    if SelectedValues[option] then
-                    SelectedValues[option] = nil
-                    else
-                    SelectedValues[option] = true
-                    end
+						SelectedTextBox.Text = option
+						ToggleDropdown()
+						callback(option)
 
-                    local result = {}
-                    for k, _ in pairs(SelectedValues) do
-                    table.insert(result, k)
-                    end
+						TweenService:Create(OptionText, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {
+							TextColor3 = Colors.NeonRed
+						}):Play()
+					end)
 
-                    SelectedTextBox.Text = table.concat(result, ", ")
-
-                    callback(result)
-                    else
-                    SelectedTextBox.Text = option
-                    ToggleDropdown()
-                    callback(option)
-                    end
-
-                TweenService:Create(OptionText, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {
-                TextColor3 = Colors.NeonRed
-                }):Play()
-                end)
 					return OptionButton
 				end
 
