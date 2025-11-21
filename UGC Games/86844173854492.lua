@@ -1,6 +1,6 @@
 game:GetService("StarterGui"):SetCore("SendNotification", {
     Title = "made by Velocity";
-    Text = "Made By alwi";
+    Text = "Made By alwi put auto executor";
     Duration = 20;
 })
 setclipboard("https://discord.gg/WM8BqXJY2z")
