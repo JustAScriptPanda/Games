@@ -1,4 +1,4 @@
-local DeltaLib = {}
+local DeltaLib = {}-
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local TweenService = cloneref(game:GetService("TweenService"))
