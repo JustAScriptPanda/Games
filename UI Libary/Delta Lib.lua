@@ -1,5 +1,4 @@
-[file name]: Delta Lib.lua (15).txt
-[file content begin]
+--[file name]: nil
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -2359,4 +2358,3 @@ function DeltaLib:CreateWindow(title, size)
 end
 
 return DeltaLib
-[file content end]
