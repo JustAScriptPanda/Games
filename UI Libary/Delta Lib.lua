@@ -15,7 +15,7 @@ local ConfigSystem = {}
 ConfigSystem.Version = "1.0"
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
-ConfigSystem.AutoSaveInterval = 30 -- seconds
+ConfigSystem.AutoSaveInterval = .1 -- seconds
 
 -- Get config path based on environment
 local function GetConfigPath()
