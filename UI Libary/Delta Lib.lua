@@ -1,4 +1,4 @@
---[file name]: nil
+--[file name]:nil
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -12,10 +12,11 @@ local HttpService = cloneref(game:GetService("HttpService"))
 
 -- Configuration System
 local ConfigSystem = {}
-ConfigSystem.Version = "1.2"
+ConfigSystem.Version = "1.3"
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
-ConfigSystem.AutoSaveInterval = .1
+ConfigSystem.AutoSaveInterval = 30 -- seconds
+ConfigSystem.AutoLoad = false -- New: Auto-load config on startup
 
 -- Track open config managers to prevent spam
 local OpenConfigManagers = {}
@@ -639,6 +640,10 @@ function DeltaLib:CreateWindow(title, size)
     local Configurations = {}
     local ConfigCallbacks = {}
     local CurrentConfig = "default"
+    local ConfigSettings = {
+        AutoLoadConfig = false,
+        LastLoadedConfig = ""
+    }
 
     -- Function to create config file name
     local function GetConfigFileName(configName)
@@ -647,12 +652,85 @@ function DeltaLib:CreateWindow(title, size)
         return safeTitle .. "_" .. (configName or "default") .. ".json"
     end
 
+    -- Function to save configuration settings
+    local function SaveConfigSettings()
+        if not IsFileSystemAvailable() then
+            return false
+        end
+        
+        local settingsData = {
+            Version = ConfigSystem.Version,
+            AutoLoadConfig = ConfigSettings.AutoLoadConfig,
+            LastLoadedConfig = ConfigSettings.LastLoadedConfig
+        }
+        
+        -- Convert to JSON
+        local jsonData
+        pcall(function()
+            jsonData = HttpService:JSONEncode(settingsData)
+        end)
+        
+        if not jsonData then
+            return false
+        end
+        
+        -- Save to file
+        local success, result = pcall(function()
+            local fileName = "config_settings.json"
+            local filePath = ConfigPath .. "/" .. fileName
+            writefile(filePath, jsonData)
+            return true
+        end)
+        
+        return success
+    end
+
+    -- Function to load configuration settings
+    local function LoadConfigSettings()
+        if not IsFileSystemAvailable() then
+            return false
+        end
+        
+        local fileName = "config_settings.json"
+        local filePath = ConfigPath .. "/" .. fileName
+        
+        if not isfile(filePath) then
+            return false
+        end
+        
+        -- Read from file
+        local jsonData
+        local success, result = pcall(function()
+            jsonData = readfile(filePath)
+            return true
+        end)
+        
+        if not success or not jsonData then
+            return false
+        end
+        
+        -- Parse JSON
+        local settingsData
+        pcall(function()
+            settingsData = HttpService:JSONDecode(jsonData)
+        end)
+        
+        if not settingsData then
+            return false
+        end
+        
+        -- Apply settings
+        ConfigSettings.AutoLoadConfig = settingsData.AutoLoadConfig or false
+        ConfigSettings.LastLoadedConfig = settingsData.LastLoadedConfig or ""
+        
+        return true
+    end
+
     -- Function to save configuration
     local function SaveConfiguration(configName)
         configName = configName or CurrentConfig
         
         if not IsFileSystemAvailable() then
-            warn("File system not available for saving configurations")
             return false
         end
         
@@ -685,7 +763,6 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if not jsonData then
-            warn("Failed to encode configuration to JSON")
             return false
         end
         
@@ -698,10 +775,8 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if success then
-            print("Configuration saved: " .. configName)
             return true
         else
-            warn("Failed to save configuration: " .. tostring(result))
             return false
         end
     end
@@ -711,7 +786,6 @@ function DeltaLib:CreateWindow(title, size)
         configName = configName or CurrentConfig
         
         if not IsFileSystemAvailable() then
-            warn("File system not available for loading configurations")
             return false
         end
         
@@ -719,7 +793,6 @@ function DeltaLib:CreateWindow(title, size)
         local filePath = ConfigPath .. "/" .. fileName
         
         if not isfile(filePath) then
-            warn("Configuration file not found: " .. fileName)
             return false
         end
         
@@ -731,7 +804,6 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if not success or not jsonData then
-            warn("Failed to read configuration file: " .. tostring(result))
             return false
         end
         
@@ -742,7 +814,6 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if not configData then
-            warn("Failed to parse configuration JSON")
             return false
         end
         
@@ -754,7 +825,10 @@ function DeltaLib:CreateWindow(title, size)
             end
         end
         
-        print("Configuration loaded: " .. configName)
+        -- Update last loaded config
+        ConfigSettings.LastLoadedConfig = configName
+        SaveConfigSettings()
+        
         return true
     end
 
@@ -763,7 +837,6 @@ function DeltaLib:CreateWindow(title, size)
         configName = configName or CurrentConfig
         
         if not IsFileSystemAvailable() then
-            warn("File system not available for deleting configurations")
             return false
         end
         
@@ -771,7 +844,6 @@ function DeltaLib:CreateWindow(title, size)
         local filePath = ConfigPath .. "/" .. fileName
         
         if not isfile(filePath) then
-            warn("Configuration file not found: " .. fileName)
             return false
         end
         
@@ -781,10 +853,12 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if success then
-            print("Configuration deleted: " .. configName)
+            -- If we deleted the current config, reset to default
+            if CurrentConfig == configName then
+                CurrentConfig = "default"
+            end
             return true
         else
-            warn("Failed to delete configuration: " .. tostring(result))
             return false
         end
     end
@@ -800,7 +874,7 @@ function DeltaLib:CreateWindow(title, size)
             local files = listfiles(ConfigPath)
             for _, filePath in ipairs(files) do
                 local fileName = filePath:match("[^\\/]+$")
-                if fileName:match("%.json$") then
+                if fileName:match("%.json$") and fileName ~= "config_settings.json" then
                     local configName = fileName:gsub("%.json$", "")
                     -- Extract the base name (remove window title prefix)
                     local baseName = configName:match("^.+_(.+)$") or configName
@@ -869,13 +943,13 @@ function DeltaLib:CreateWindow(title, size)
         local windowConfigs = ListConfigurations()
         
         -- Calculate dynamic height - Made more compact
-        local baseHeight = 320  -- Reduced from 400
-        local configListHeight = 100  -- Reduced from 150
+        local baseHeight = 350  -- Slightly taller for new toggle
+        local configListHeight = 100
         
         -- Create config manager window - Made more compact
         local ConfigWindow = Instance.new("Frame")
         ConfigWindow.Name = "ConfigManager"
-        ConfigWindow.Size = UDim2.new(0, 300, 0, baseHeight)  -- Reduced width and height
+        ConfigWindow.Size = UDim2.new(0, 300, 0, baseHeight)
         ConfigWindow.Position = UDim2.new(0.5, -150, 0.5, -baseHeight/2)
         ConfigWindow.BackgroundColor3 = Colors.Background
         ConfigWindow.BorderSizePixel = 0
@@ -897,13 +971,13 @@ function DeltaLib:CreateWindow(title, size)
 
         local ConfigTitleBar = Instance.new("Frame")
         ConfigTitleBar.Name = "ConfigTitleBar"
-        ConfigTitleBar.Size = UDim2.new(1, 0, 0, 25)  -- Reduced height
+        ConfigTitleBar.Size = UDim2.new(1, 0, 0, 25)
         ConfigTitleBar.BackgroundColor3 = Colors.DarkBackground
         ConfigTitleBar.BorderSizePixel = 0
         ConfigTitleBar.Parent = ConfigWindow
 
         local ConfigTitleBarCorner = Instance.new("UICorner")
-        ConfigTitleBarCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner radius
+        ConfigTitleBarCorner.CornerRadius = UDim.new(0, 3)
         ConfigTitleBarCorner.Parent = ConfigTitleBar
 
         -- Add border to title bar
@@ -918,19 +992,19 @@ function DeltaLib:CreateWindow(title, size)
         ConfigTitle.BackgroundTransparency = 1
         ConfigTitle.Text = "Config Manager"
         ConfigTitle.TextColor3 = Colors.NeonRed
-        ConfigTitle.TextSize = 12  -- Smaller text
+        ConfigTitle.TextSize = 12
         ConfigTitle.Font = Enum.Font.GothamBold
         ConfigTitle.TextXAlignment = Enum.TextXAlignment.Center
         ConfigTitle.Parent = ConfigTitleBar
 
         local ConfigCloseButton = Instance.new("TextButton")
         ConfigCloseButton.Name = "ConfigCloseButton"
-        ConfigCloseButton.Size = UDim2.new(0, 18, 0, 18)  -- Smaller button
+        ConfigCloseButton.Size = UDim2.new(0, 18, 0, 18)
         ConfigCloseButton.Position = UDim2.new(1, -20, 0, 3)
         ConfigCloseButton.BackgroundTransparency = 1
         ConfigCloseButton.Text = "X"
         ConfigCloseButton.TextColor3 = Colors.Text
-        ConfigCloseButton.TextSize = 12  -- Smaller text
+        ConfigCloseButton.TextSize = 12
         ConfigCloseButton.Font = Enum.Font.GothamBold
         ConfigCloseButton.Parent = ConfigTitleBar
 
@@ -951,11 +1025,11 @@ function DeltaLib:CreateWindow(title, size)
 
         local ConfigContent = Instance.new("ScrollingFrame")
         ConfigContent.Name = "ConfigContent"
-        ConfigContent.Size = UDim2.new(1, -10, 1, -35)  -- Adjusted for smaller title bar
+        ConfigContent.Size = UDim2.new(1, -10, 1, -35)
         ConfigContent.Position = UDim2.new(0, 5, 0, 30)
         ConfigContent.BackgroundTransparency = 1
         ConfigContent.BorderSizePixel = 0
-        ConfigContent.ScrollBarThickness = 3  -- Thinner scrollbar
+        ConfigContent.ScrollBarThickness = 3
         ConfigContent.ScrollBarImageColor3 = Colors.NeonRed
         ConfigContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
         ConfigContent.ScrollingEnabled = true
@@ -964,25 +1038,25 @@ function DeltaLib:CreateWindow(title, size)
 
         local ConfigLayout = Instance.new("UIListLayout")
         ConfigLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ConfigLayout.Padding = UDim.new(0, 6)  -- Reduced padding
+        ConfigLayout.Padding = UDim.new(0, 6)
         ConfigLayout.Parent = ConfigContent
 
         local ConfigPadding = Instance.new("UIPadding")
-        ConfigPadding.PaddingTop = UDim.new(0, 6)  -- Reduced padding
-        ConfigPadding.PaddingBottom = UDim.new(0, 6)  -- Reduced padding
+        ConfigPadding.PaddingTop = UDim.new(0, 6)
+        ConfigPadding.PaddingBottom = UDim.new(0, 6)
         ConfigPadding.Parent = ConfigContent
 
-        -- Current Config Section - More compact
+        -- Current Config Section
         local CurrentConfigSection = Instance.new("Frame")
         CurrentConfigSection.Name = "CurrentConfigSection"
-        CurrentConfigSection.Size = UDim2.new(1, 0, 0, 65)  -- Reduced height
+        CurrentConfigSection.Size = UDim2.new(1, 0, 0, 65)
         CurrentConfigSection.BackgroundColor3 = Colors.PanelBackground
         CurrentConfigSection.BorderSizePixel = 0
         CurrentConfigSection.LayoutOrder = 1
         CurrentConfigSection.Parent = ConfigContent
 
         local CurrentConfigCorner = Instance.new("UICorner")
-        CurrentConfigCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner
+        CurrentConfigCorner.CornerRadius = UDim.new(0, 3)
         CurrentConfigCorner.Parent = CurrentConfigSection
 
         -- Add border to section
@@ -993,19 +1067,19 @@ function DeltaLib:CreateWindow(title, size)
 
         local CurrentConfigLabel = Instance.new("TextLabel")
         CurrentConfigLabel.Name = "CurrentConfigLabel"
-        CurrentConfigLabel.Size = UDim2.new(1, -10, 0, 18)  -- Smaller label
+        CurrentConfigLabel.Size = UDim2.new(1, -10, 0, 18)
         CurrentConfigLabel.Position = UDim2.new(0, 5, 0, 4)
         CurrentConfigLabel.BackgroundTransparency = 1
         CurrentConfigLabel.Text = "Current Configuration"
         CurrentConfigLabel.TextColor3 = Colors.NeonRed
-        CurrentConfigLabel.TextSize = 11  -- Smaller text
+        CurrentConfigLabel.TextSize = 11
         CurrentConfigLabel.Font = Enum.Font.GothamBold
         CurrentConfigLabel.TextXAlignment = Enum.TextXAlignment.Left
         CurrentConfigLabel.Parent = CurrentConfigSection
 
         local ConfigNameInput = Instance.new("TextBox")
         ConfigNameInput.Name = "ConfigNameInput"
-        ConfigNameInput.Size = UDim2.new(1, -10, 0, 22)  -- Smaller input
+        ConfigNameInput.Size = UDim2.new(1, -10, 0, 22)
         ConfigNameInput.Position = UDim2.new(0, 5, 0, 25)
         ConfigNameInput.BackgroundColor3 = Colors.DarkBackground
         ConfigNameInput.BorderSizePixel = 0
@@ -1013,7 +1087,7 @@ function DeltaLib:CreateWindow(title, size)
         ConfigNameInput.Text = CurrentConfig
         ConfigNameInput.TextColor3 = Colors.Text
         ConfigNameInput.PlaceholderColor3 = Colors.SubText
-        ConfigNameInput.TextSize = 11  -- Smaller text
+        ConfigNameInput.TextSize = 11
         ConfigNameInput.Font = Enum.Font.Gotham
         ConfigNameInput.TextXAlignment = Enum.TextXAlignment.Left
         ConfigNameInput.ClearTextOnFocus = false
@@ -1030,16 +1104,114 @@ function DeltaLib:CreateWindow(title, size)
         InputBorder.Parent = ConfigNameInput
 
         local ConfigNameInputPadding = Instance.new("UIPadding")
-        ConfigNameInputPadding.PaddingLeft = UDim.new(0, 6)  -- Reduced padding
+        ConfigNameInputPadding.PaddingLeft = UDim.new(0, 6)
         ConfigNameInputPadding.Parent = ConfigNameInput
 
-        -- Action Buttons Section - More compact
+        -- Settings Section - NEW: Added Auto Load Toggle
+        local SettingsSection = Instance.new("Frame")
+        SettingsSection.Name = "SettingsSection"
+        SettingsSection.Size = UDim2.new(1, 0, 0, 40)
+        SettingsSection.BackgroundColor3 = Colors.PanelBackground
+        SettingsSection.BorderSizePixel = 0
+        SettingsSection.LayoutOrder = 2
+        SettingsSection.Parent = ConfigContent
+
+        local SettingsCorner = Instance.new("UICorner")
+        SettingsCorner.CornerRadius = UDim.new(0, 3)
+        SettingsCorner.Parent = SettingsSection
+
+        -- Add border to settings section
+        local SettingsBorder = Instance.new("UIStroke")
+        SettingsBorder.Color = Colors.DarkBorder
+        SettingsBorder.Thickness = 1
+        SettingsBorder.Parent = SettingsSection
+
+        local AutoLoadToggle = Instance.new("TextButton")
+        AutoLoadToggle.Name = "AutoLoadToggle"
+        AutoLoadToggle.Size = UDim2.new(1, -10, 1, -8)
+        AutoLoadToggle.Position = UDim2.new(0, 5, 0, 4)
+        AutoLoadToggle.BackgroundColor3 = Colors.DarkBackground
+        AutoLoadToggle.BorderSizePixel = 0
+        AutoLoadToggle.Text = ""
+        AutoLoadToggle.Parent = SettingsSection
+
+        local AutoLoadToggleCorner = Instance.new("UICorner")
+        AutoLoadToggleCorner.CornerRadius = UDim.new(0, 3)
+        AutoLoadToggleCorner.Parent = AutoLoadToggle
+
+        -- Add border to toggle
+        local ToggleBorder = Instance.new("UIStroke")
+        ToggleBorder.Color = Colors.DarkBorder
+        ToggleBorder.Thickness = 1
+        ToggleBorder.Parent = AutoLoadToggle
+
+        local AutoLoadLabel = Instance.new("TextLabel")
+        AutoLoadLabel.Name = "AutoLoadLabel"
+        AutoLoadLabel.Size = UDim2.new(1, -40, 1, 0)
+        AutoLoadLabel.BackgroundTransparency = 1
+        AutoLoadLabel.Text = "Auto Load Config"
+        AutoLoadLabel.TextColor3 = Colors.Text
+        AutoLoadLabel.TextSize = 11
+        AutoLoadLabel.Font = Enum.Font.Gotham
+        AutoLoadLabel.TextXAlignment = Enum.TextXAlignment.Left
+        AutoLoadLabel.Parent = AutoLoadToggle
+
+        local AutoLoadPadding = Instance.new("UIPadding")
+        AutoLoadPadding.PaddingLeft = UDim.new(0, 8)
+        AutoLoadPadding.Parent = AutoLoadLabel
+
+        local AutoLoadToggleButton = Instance.new("Frame")
+        AutoLoadToggleButton.Name = "AutoLoadToggleButton"
+        AutoLoadToggleButton.Size = UDim2.new(0, 28, 0, 14)
+        AutoLoadToggleButton.Position = UDim2.new(1, -32, 0.5, -7)
+        AutoLoadToggleButton.BackgroundColor3 = Colors.DarkBackground
+        AutoLoadToggleButton.BorderSizePixel = 0
+        AutoLoadToggleButton.Parent = AutoLoadToggle
+
+        local AutoLoadToggleCorner2 = Instance.new("UICorner")
+        AutoLoadToggleCorner2.CornerRadius = UDim.new(1, 0)
+        AutoLoadToggleCorner2.Parent = AutoLoadToggleButton
+
+        local AutoLoadToggleCircle = Instance.new("Frame")
+        AutoLoadToggleCircle.Name = "AutoLoadToggleCircle"
+        AutoLoadToggleCircle.Size = UDim2.new(0, 10, 0, 10)
+        AutoLoadToggleCircle.Position = UDim2.new(0, 2, 0, 2)
+        AutoLoadToggleCircle.BackgroundColor3 = Colors.Text
+        AutoLoadToggleCircle.BorderSizePixel = 0
+        AutoLoadToggleCircle.Parent = AutoLoadToggleButton
+
+        local AutoLoadToggleCircleCorner = Instance.new("UICorner")
+        AutoLoadToggleCircleCorner.CornerRadius = UDim.new(1, 0)
+        AutoLoadToggleCircleCorner.Parent = AutoLoadToggleCircle
+
+        -- Update auto load toggle appearance
+        local function UpdateAutoLoadToggle()
+            if ConfigSettings.AutoLoadConfig then
+                TweenService:Create(AutoLoadToggleButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.NeonRed}):Play()
+                TweenService:Create(AutoLoadToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 16, 0, 2)}):Play()
+            else
+                TweenService:Create(AutoLoadToggleButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.DarkBackground}):Play()
+                TweenService:Create(AutoLoadToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0, 2)}):Play()
+            end
+        end
+
+        -- Set initial state
+        UpdateAutoLoadToggle()
+
+        -- Auto load toggle logic
+        SafeConnect(AutoLoadToggle.MouseButton1Click, function()
+            ConfigSettings.AutoLoadConfig = not ConfigSettings.AutoLoadConfig
+            UpdateAutoLoadToggle()
+            SaveConfigSettings()
+        end)
+
+        -- Action Buttons Section
         local ActionButtonsSection = Instance.new("Frame")
         ActionButtonsSection.Name = "ActionButtonsSection"
-        ActionButtonsSection.Size = UDim2.new(1, 0, 0, 85)  -- Reduced height
+        ActionButtonsSection.Size = UDim2.new(1, 0, 0, 85)
         ActionButtonsSection.BackgroundColor3 = Colors.PanelBackground
         ActionButtonsSection.BorderSizePixel = 0
-        ActionButtonsSection.LayoutOrder = 2
+        ActionButtonsSection.LayoutOrder = 3
         ActionButtonsSection.Parent = ConfigContent
 
         local ActionButtonsCorner = Instance.new("UICorner")
@@ -1054,7 +1226,7 @@ function DeltaLib:CreateWindow(title, size)
 
         local ActionButtonsLabel = Instance.new("TextLabel")
         ActionButtonsLabel.Name = "ActionButtonsLabel"
-        ActionButtonsLabel.Size = UDim2.new(1, -10, 0, 18)  -- Smaller label
+        ActionButtonsLabel.Size = UDim2.new(1, -10, 0, 18)
         ActionButtonsLabel.Position = UDim2.new(0, 5, 0, 4)
         ActionButtonsLabel.BackgroundTransparency = 1
         ActionButtonsLabel.Text = "Actions"
@@ -1068,13 +1240,13 @@ function DeltaLib:CreateWindow(title, size)
         local saveDebounce = CreateDebounce(0.5)
         local SaveButton = Instance.new("TextButton")
         SaveButton.Name = "SaveButton"
-        SaveButton.Size = UDim2.new(1, -10, 0, 22)  -- Smaller button
+        SaveButton.Size = UDim2.new(1, -10, 0, 22)
         SaveButton.Position = UDim2.new(0, 5, 0, 25)
         SaveButton.BackgroundColor3 = Colors.NeonRed
         SaveButton.BorderSizePixel = 0
         SaveButton.Text = "Save Configuration"
         SaveButton.TextColor3 = Colors.Text
-        SaveButton.TextSize = 11  -- Smaller text
+        SaveButton.TextSize = 11
         SaveButton.Font = Enum.Font.Gotham
         SaveButton.Parent = ActionButtonsSection
 
@@ -1109,7 +1281,7 @@ function DeltaLib:CreateWindow(title, size)
                 SaveButton.Text = "Save Configuration"
                 SaveButton.BackgroundColor3 = Colors.NeonRed
                 
-                -- Refresh config lists
+                -- Refresh config list
                 RefreshConfigList()
             else
                 -- Show error feedback
@@ -1127,7 +1299,7 @@ function DeltaLib:CreateWindow(title, size)
         local loadDebounce = CreateDebounce(0.5)
         local LoadButton = Instance.new("TextButton")
         LoadButton.Name = "LoadButton"
-        LoadButton.Size = UDim2.new(1, -10, 0, 22)  -- Smaller button
+        LoadButton.Size = UDim2.new(1, -10, 0, 22)
         LoadButton.Position = UDim2.new(0, 5, 0, 50)
         LoadButton.BackgroundColor3 = Colors.DarkBackground
         LoadButton.BorderSizePixel = 0
@@ -1179,13 +1351,13 @@ function DeltaLib:CreateWindow(title, size)
             end
         end)
 
-        -- Config List Section (Window-specific configs) - More compact
+        -- Config List Section (Window-specific configs)
         local ConfigListSection = Instance.new("Frame")
         ConfigListSection.Name = "ConfigListSection"
-        ConfigListSection.Size = UDim2.new(1, 0, 0, configListHeight + 25)  -- Reduced height
+        ConfigListSection.Size = UDim2.new(1, 0, 0, configListHeight + 25)
         ConfigListSection.BackgroundColor3 = Colors.PanelBackground
         ConfigListSection.BorderSizePixel = 0
-        ConfigListSection.LayoutOrder = 3
+        ConfigListSection.LayoutOrder = 4
         ConfigListSection.Parent = ConfigContent
 
         local ConfigListCorner = Instance.new("UICorner")
@@ -1241,11 +1413,11 @@ function DeltaLib:CreateWindow(title, size)
         ConfigListPadding.PaddingBottom = UDim.new(0, 5)
         ConfigListPadding.Parent = ConfigList
 
-        -- Function to refresh config list
+        -- Function to refresh config list with delete buttons
         function RefreshConfigList()
             -- Clear existing items
             for _, child in ipairs(ConfigList:GetChildren()) do
-                if child:IsA("TextButton") then
+                if child:IsA("Frame") and child.Name:match("^ConfigItem_") then
                     child:Destroy()
                 end
             end
@@ -1255,52 +1427,108 @@ function DeltaLib:CreateWindow(title, size)
             ConfigListLabel.Text = "Configurations (" .. #configs .. ")"
             
             for _, configName in ipairs(configs) do
-                local ConfigItem = Instance.new("TextButton")
+                local ConfigItem = Instance.new("Frame")
                 ConfigItem.Name = "ConfigItem_" .. configName
-                ConfigItem.Size = UDim2.new(1, -10, 0, 22)  -- Smaller button
-                ConfigItem.BackgroundColor3 = Colors.PanelBackground
-                ConfigItem.BorderSizePixel = 0
-                ConfigItem.Text = configName
-                ConfigItem.TextColor3 = Colors.Text
-                ConfigItem.TextSize = 11  -- Smaller text
-                ConfigItem.Font = Enum.Font.Gotham
+                ConfigItem.Size = UDim2.new(1, -10, 0, 22)
+                ConfigItem.BackgroundTransparency = 1
                 ConfigItem.LayoutOrder = _
                 ConfigItem.Parent = ConfigList
 
-                local ConfigItemCorner = Instance.new("UICorner")
-                ConfigItemCorner.CornerRadius = UDim.new(0, 3)
-                ConfigItemCorner.Parent = ConfigItem
+                -- Config name button (load on click)
+                local ConfigNameButton = Instance.new("TextButton")
+                ConfigNameButton.Name = "ConfigNameButton"
+                ConfigNameButton.Size = UDim2.new(1, -25, 1, 0)
+                ConfigNameButton.BackgroundColor3 = Colors.PanelBackground
+                ConfigNameButton.BorderSizePixel = 0
+                ConfigNameButton.Text = configName
+                ConfigNameButton.TextColor3 = Colors.Text
+                ConfigNameButton.TextSize = 11
+                ConfigNameButton.Font = Enum.Font.Gotham
+                ConfigNameButton.Parent = ConfigItem
 
-                -- Add border to config item
-                local ItemBorder = Instance.new("UIStroke")
-                ItemBorder.Color = Colors.DarkBorder
-                ItemBorder.Thickness = 1
-                ItemBorder.Parent = ConfigItem
+                local ConfigNameButtonCorner = Instance.new("UICorner")
+                ConfigNameButtonCorner.CornerRadius = UDim.new(0, 3)
+                ConfigNameButtonCorner.Parent = ConfigNameButton
 
-                SafeConnect(ConfigItem.MouseButton1Click, function()
+                -- Add border to config name button
+                local NameButtonBorder = Instance.new("UIStroke")
+                NameButtonBorder.Color = Colors.DarkBorder
+                NameButtonBorder.Thickness = 1
+                NameButtonBorder.Parent = ConfigNameButton
+
+                -- Delete button
+                local DeleteConfigButton = Instance.new("TextButton")
+                DeleteConfigButton.Name = "DeleteConfigButton"
+                DeleteConfigButton.Size = UDim2.new(0, 22, 1, 0)
+                DeleteConfigButton.Position = UDim2.new(1, -22, 0, 0)
+                DeleteConfigButton.BackgroundColor3 = Colors.Error
+                DeleteConfigButton.BorderSizePixel = 0
+                DeleteConfigButton.Text = "X"
+                DeleteConfigButton.TextColor3 = Colors.Text
+                DeleteConfigButton.TextSize = 11
+                DeleteConfigButton.Font = Enum.Font.GothamBold
+                DeleteConfigButton.Parent = ConfigItem
+
+                local DeleteButtonCorner = Instance.new("UICorner")
+                DeleteButtonCorner.CornerRadius = UDim.new(0, 3)
+                DeleteButtonCorner.Parent = DeleteConfigButton
+
+                -- Add border to delete button
+                local DeleteButtonBorder = Instance.new("UIStroke")
+                DeleteButtonBorder.Color = Colors.DarkBorder
+                DeleteButtonBorder.Thickness = 1
+                DeleteButtonBorder.Parent = DeleteConfigButton
+
+                -- Config name button click (load config)
+                SafeConnect(ConfigNameButton.MouseButton1Click, function()
                     CurrentConfig = configName
                     ConfigNameInput.Text = configName
                     LoadConfiguration(configName)
                     
                     -- Highlight selected item
                     for _, item in ipairs(ConfigList:GetChildren()) do
-                        if item:IsA("TextButton") then
-                            item.BackgroundColor3 = Colors.PanelBackground
+                        if item:IsA("Frame") and item:FindFirstChild("ConfigNameButton") then
+                            item.ConfigNameButton.BackgroundColor3 = Colors.PanelBackground
                         end
                     end
-                    ConfigItem.BackgroundColor3 = Colors.NeonRed
+                    ConfigNameButton.BackgroundColor3 = Colors.NeonRed
                 end)
 
-                SafeConnect(ConfigItem.MouseEnter, function()
-                    if ConfigItem.BackgroundColor3 ~= Colors.NeonRed then
-                        ConfigItem.BackgroundColor3 = Colors.LightNeonRed
+                -- Config name button hover effects
+                SafeConnect(ConfigNameButton.MouseEnter, function()
+                    if ConfigNameButton.BackgroundColor3 ~= Colors.NeonRed then
+                        ConfigNameButton.BackgroundColor3 = Colors.LightNeonRed
                     end
                 end)
 
-                SafeConnect(ConfigItem.MouseLeave, function()
-                    if ConfigItem.BackgroundColor3 ~= Colors.NeonRed then
-                        ConfigItem.BackgroundColor3 = Colors.PanelBackground
+                SafeConnect(ConfigNameButton.MouseLeave, function()
+                    if ConfigNameButton.BackgroundColor3 ~= Colors.NeonRed then
+                        ConfigNameButton.BackgroundColor3 = Colors.PanelBackground
                     end
+                end)
+
+                -- Delete button click (delete config)
+                SafeConnect(DeleteConfigButton.MouseButton1Click, function()
+                    if DeleteConfiguration(configName) then
+                        -- Remove from list
+                        ConfigItem:Destroy()
+                        ConfigListLabel.Text = "Configurations (" .. (#configs - 1) .. ")"
+                        
+                        -- Update input if we deleted current config
+                        if CurrentConfig == configName then
+                            CurrentConfig = "default"
+                            ConfigNameInput.Text = "default"
+                        end
+                    end
+                end)
+
+                -- Delete button hover effects
+                SafeConnect(DeleteConfigButton.MouseEnter, function()
+                    DeleteConfigButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+                end)
+
+                SafeConnect(DeleteConfigButton.MouseLeave, function()
+                    DeleteConfigButton.BackgroundColor3 = Colors.Error
                 end)
             end
         end
@@ -1308,7 +1536,7 @@ function DeltaLib:CreateWindow(title, size)
         -- Refresh button
         local RefreshButton = Instance.new("TextButton")
         RefreshButton.Name = "RefreshButton"
-        RefreshButton.Size = UDim2.new(0, 60, 0, 18)  -- Smaller button
+        RefreshButton.Size = UDim2.new(0, 60, 0, 18)
         RefreshButton.Position = UDim2.new(1, -65, 0, 4)
         RefreshButton.BackgroundColor3 = Colors.DarkBackground
         RefreshButton.BorderSizePixel = 0
@@ -1362,6 +1590,19 @@ function DeltaLib:CreateWindow(title, size)
                 end
             end
         end)
+    end
+
+    -- Load config settings and auto-load config if enabled
+    if IsFileSystemAvailable() then
+        LoadConfigSettings()
+        
+        -- Auto-load config if enabled
+        if ConfigSettings.AutoLoadConfig and ConfigSettings.LastLoadedConfig ~= "" then
+            task.spawn(function()
+                task.wait(0.5) -- Wait for UI to initialize
+                LoadConfiguration(ConfigSettings.LastLoadedConfig)
+            end)
+        end
     end
 
     -- Create Tab Function
@@ -1926,12 +2167,12 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownButton.Parent = DropdownContainer
 
                 local DropdownButtonCorner = Instance.new("UICorner")
-                DropdownButtonCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner
+                DropdownButtonCorner.CornerRadius = UDim.new(0, 3)
                 DropdownButtonCorner.Parent = DropdownButton
 
                 local DropdownButtonStroke = Instance.new("UIStroke")
                 DropdownButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                DropdownButtonStroke.Color = Colors.DarkBorder  -- Darker border
+                DropdownButtonStroke.Color = Colors.DarkBorder
                 DropdownButtonStroke.Thickness = 1
                 DropdownButtonStroke.Parent = DropdownButton
 
@@ -1943,7 +2184,7 @@ function DeltaLib:CreateWindow(title, size)
                 SelectedTextBox.Text = default
                 SelectedTextBox.PlaceholderText = "..."
                 SelectedTextBox.TextColor3 = Colors.Text
-                SelectedTextBox.TextSize = 13  -- Slightly smaller
+                SelectedTextBox.TextSize = 13
                 SelectedTextBox.Font = Enum.Font.Gotham
                 SelectedTextBox.TextXAlignment = Enum.TextXAlignment.Left
                 SelectedTextBox.ClearTextOnFocus = false
@@ -1952,7 +2193,7 @@ function DeltaLib:CreateWindow(title, size)
 
                 local DropdownArrow = Instance.new("ImageLabel")
                 DropdownArrow.Name = "DropdownArrow"
-                DropdownArrow.Size = UDim2.new(0, 18, 0, 18)  -- Smaller arrow
+                DropdownArrow.Size = UDim2.new(0, 18, 0, 18)
                 DropdownArrow.Position = UDim2.new(1, -24, 0, 3)
                 DropdownArrow.BackgroundTransparency = 1
                 DropdownArrow.Image = "rbxassetid://6031094670"
@@ -1972,12 +2213,12 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownList.Parent = DropdownContainer
 
                 local DropdownListCorner = Instance.new("UICorner")
-                DropdownListCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner
+                DropdownListCorner.CornerRadius = UDim.new(0, 3)
                 DropdownListCorner.Parent = DropdownList
 
                 local DropdownListStroke = Instance.new("UIStroke")
                 DropdownListStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                DropdownListStroke.Color = Colors.DarkBorder  -- Darker border
+                DropdownListStroke.Color = Colors.DarkBorder
                 DropdownListStroke.Thickness = 1
                 DropdownListStroke.Parent = DropdownList
 
@@ -1987,7 +2228,7 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownScrollFrame.Position = UDim2.new(0, 5, 0, 5)
                 DropdownScrollFrame.BackgroundTransparency = 1
                 DropdownScrollFrame.BorderSizePixel = 0
-                DropdownScrollFrame.ScrollBarThickness = 3  -- Thinner scrollbar
+                DropdownScrollFrame.ScrollBarThickness = 3
                 DropdownScrollFrame.ScrollBarImageColor3 = Colors.NeonRed
                 DropdownScrollFrame.BottomImage = ""
                 DropdownScrollFrame.TopImage = ""
@@ -1996,14 +2237,14 @@ function DeltaLib:CreateWindow(title, size)
 
                 local DropdownOptionsLayout = Instance.new("UIListLayout")
                 DropdownOptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownOptionsLayout.Padding = UDim.new(0, 4)  -- Less padding
+                DropdownOptionsLayout.Padding = UDim.new(0, 4)
                 DropdownOptionsLayout.Parent = DropdownScrollFrame
 
                 local DropdownOptionsPadding = Instance.new("UIPadding")
                 DropdownOptionsPadding.PaddingLeft = UDim.new(0, 5)
                 DropdownOptionsPadding.PaddingRight = UDim.new(0, 5)
-                DropdownOptionsPadding.PaddingTop = UDim.new(0, 4)  -- Less padding
-                DropdownOptionsPadding.PaddingBottom = UDim.new(0, 4)  -- Less padding
+                DropdownOptionsPadding.PaddingTop = UDim.new(0, 4)
+                DropdownOptionsPadding.PaddingBottom = UDim.new(0, 4)
                 DropdownOptionsPadding.Parent = DropdownScrollFrame
 
                 local isOpen = false
@@ -2021,7 +2262,7 @@ function DeltaLib:CreateWindow(title, size)
                         DropdownList.Visible = true
                         DropdownList.ZIndex = 999999
 
-                        local optionsHeight = math.min(#options * 28 + 8, 140)  -- More compact
+                        local optionsHeight = math.min(#options * 28 + 8, 140)
 
                         TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
                         TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
@@ -2045,7 +2286,7 @@ function DeltaLib:CreateWindow(title, size)
                 local function CreateOptionButton(option, index)
                     local OptionButton = Instance.new("TextButton")
                     OptionButton.Name = "Option_" .. option
-                    OptionButton.Size = UDim2.new(1, 0, 0, 24)  -- Smaller option button
+                    OptionButton.Size = UDim2.new(1, 0, 0, 24)
                     OptionButton.BackgroundColor3 = Colors.PanelBackground
                     OptionButton.BorderSizePixel = 0
                     OptionButton.Text = ""
@@ -2066,11 +2307,11 @@ function DeltaLib:CreateWindow(title, size)
                     local OptionText = Instance.new("TextLabel")
                     OptionText.Name = "OptionText"
                     OptionText.Size = UDim2.new(1, -10, 1, 0)
-                    OptionText.Position = UDim2.new(0, 8, 0, 0)  -- Less padding
+                    OptionText.Position = UDim2.new(0, 8, 0, 0)
                     OptionText.BackgroundTransparency = 1
                     OptionText.Text = option
                     OptionText.TextColor3 = Colors.Text
-                    OptionText.TextSize = 13  -- Smaller text
+                    OptionText.TextSize = 13
                     OptionText.Font = Enum.Font.Gotham
                     OptionText.TextXAlignment = Enum.TextXAlignment.Left
                     OptionText.ZIndex = 1000002
@@ -2346,12 +2587,14 @@ function DeltaLib:CreateWindow(title, size)
         return CurrentConfig
     end
 
-    -- Try to load default config on startup
-    if IsFileSystemAvailable() then
-        task.spawn(function()
-            task.wait(0.5) -- Wait a bit for UI to fully initialize
-            LoadConfiguration("default")
-        end)
+    function Window:GetAutoLoadEnabled()
+        return ConfigSettings.AutoLoadConfig
+    end
+
+    function Window:SetAutoLoadEnabled(enabled)
+        ConfigSettings.AutoLoadConfig = enabled
+        SaveConfigSettings()
+        return true
     end
 
     return Window
