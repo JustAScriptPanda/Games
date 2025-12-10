@@ -1,4 +1,5 @@
--- [file name]:nil
+[file name]: Delta Lib.lua (15).txt
+[file content begin]
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -12,10 +13,10 @@ local HttpService = cloneref(game:GetService("HttpService"))
 
 -- Configuration System
 local ConfigSystem = {}
-ConfigSystem.Version = "1.1"
+ConfigSystem.Version = "1.2"
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
-ConfigSystem.AutoSaveInterval = .1
+ConfigSystem.AutoSaveInterval = 30 -- seconds
 
 -- Track open config managers to prevent spam
 local OpenConfigManagers = {}
@@ -88,7 +89,7 @@ local function CreateDebounce(delay)
     end
 end
 
--- Colors
+-- Colors - Updated with darker edges
 local Colors = {
     Background = Color3.fromRGB(25, 25, 25),
     DarkBackground = Color3.fromRGB(15, 15, 15),
@@ -98,10 +99,12 @@ local Colors = {
     LightNeonRed = Color3.fromRGB(255, 50, 90),
     Text = Color3.fromRGB(255, 255, 255),
     SubText = Color3.fromRGB(200, 200, 200),
-    Border = Color3.fromRGB(50, 50, 50),
-    Success = Color3.fromRGB(0, 255, 127),
-    Warning = Color3.fromRGB(255, 191, 0),
-    Error = Color3.fromRGB(255, 69, 58)
+    Border = Color3.fromRGB(35, 35, 35), -- Darker border
+    DarkBorder = Color3.fromRGB(20, 20, 20), -- Even darker for edges
+    Success = Color3.fromRGB(0, 200, 83),
+    Warning = Color3.fromRGB(255, 149, 0),
+    Error = Color3.fromRGB(255, 59, 48),
+    PanelBackground = Color3.fromRGB(28, 28, 28)
 }
 
 -- Improved Draggable Function with Delta Movement and Error Handling
@@ -223,6 +226,12 @@ function DeltaLib:CreateWindow(title, size)
     Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
     Shadow.Parent = MainFrame
 
+    -- Add border for main frame
+    local MainFrameStroke = Instance.new("UIStroke")
+    MainFrameStroke.Color = Colors.DarkBorder
+    MainFrameStroke.Thickness = 1
+    MainFrameStroke.Parent = MainFrame
+
     -- Title Bar
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
@@ -242,6 +251,12 @@ function DeltaLib:CreateWindow(title, size)
     TitleBarCover.BackgroundColor3 = Colors.DarkBackground
     TitleBarCover.BorderSizePixel = 0
     TitleBarCover.Parent = TitleBar
+
+    -- Add border to title bar
+    local TitleBarStroke = Instance.new("UIStroke")
+    TitleBarStroke.Color = Colors.DarkBorder
+    TitleBarStroke.Thickness = 1
+    TitleBarStroke.Parent = TitleBar
 
     -- User Avatar
     local AvatarContainer = Instance.new("Frame")
@@ -378,6 +393,12 @@ function DeltaLib:CreateWindow(title, size)
     TabContainer.BorderSizePixel = 0
     TabContainer.Parent = MainFrame
 
+    -- Add border to tab container
+    local TabContainerStroke = Instance.new("UIStroke")
+    TabContainerStroke.Color = Colors.DarkBorder
+    TabContainerStroke.Thickness = 1
+    TabContainerStroke.Parent = TabContainer
+
     -- Left Scroll Button
     local LeftScrollButton = Instance.new("TextButton")
     LeftScrollButton.Name = "LeftScrollButton"
@@ -392,6 +413,10 @@ function DeltaLib:CreateWindow(title, size)
     LeftScrollButton.ZIndex = 3
     LeftScrollButton.Parent = TabContainer
 
+    local LeftScrollButtonCorner = Instance.new("UICorner")
+    LeftScrollButtonCorner.CornerRadius = UDim.new(0, 3)
+    LeftScrollButtonCorner.Parent = LeftScrollButton
+
     -- Right Scroll Button
     local RightScrollButton = Instance.new("TextButton")
     RightScrollButton.Name = "RightScrollButton"
@@ -405,6 +430,10 @@ function DeltaLib:CreateWindow(title, size)
     RightScrollButton.Font = Enum.Font.GothamBold
     RightScrollButton.ZIndex = 3
     RightScrollButton.Parent = TabContainer
+
+    local RightScrollButtonCorner = Instance.new("UICorner")
+    RightScrollButtonCorner.CornerRadius = UDim.new(0, 3)
+    RightScrollButtonCorner.Parent = RightScrollButton
 
     -- Tab Scroll Frame
     local TabScrollFrame = Instance.new("ScrollingFrame")
@@ -824,7 +853,7 @@ function DeltaLib:CreateWindow(title, size)
         ConfigCallbacks[elementId] = nil
     end
 
-    -- Function to show configuration manager with improved features
+    -- Function to show compact configuration manager
     local function ShowConfigManager()
         -- Prevent spam with debounce
         if configButtonDebounce() then
@@ -840,20 +869,15 @@ function DeltaLib:CreateWindow(title, size)
         local allConfigs = ListAllConfigurations()
         local windowConfigs = ListConfigurations()
         
-        -- Calculate dynamic height based on number of configs
-        local baseHeight = 400
-        local configListHeight = 150 -- Fixed height for config list
+        -- Calculate dynamic height - Made more compact
+        local baseHeight = 320  -- Reduced from 400
+        local configListHeight = 100  -- Reduced from 150
         
-        if #allConfigs > 0 then
-            -- Show all configs section if there are any
-            baseHeight = baseHeight + 180
-        end
-        
-        -- Create config manager window
+        -- Create config manager window - Made more compact
         local ConfigWindow = Instance.new("Frame")
         ConfigWindow.Name = "ConfigManager"
-        ConfigWindow.Size = UDim2.new(0, 350, 0, baseHeight)
-        ConfigWindow.Position = UDim2.new(0.5, -175, 0.5, -baseHeight/2)
+        ConfigWindow.Size = UDim2.new(0, 300, 0, baseHeight)  -- Reduced width and height
+        ConfigWindow.Position = UDim2.new(0.5, -150, 0.5, -baseHeight/2)
         ConfigWindow.BackgroundColor3 = Colors.Background
         ConfigWindow.BorderSizePixel = 0
         ConfigWindow.ZIndex = 100
@@ -866,50 +890,48 @@ function DeltaLib:CreateWindow(title, size)
         ConfigCorner.CornerRadius = UDim.new(0, 4)
         ConfigCorner.Parent = ConfigWindow
 
-        local ConfigShadow = Instance.new("ImageLabel")
-        ConfigShadow.Name = "ConfigShadow"
-        ConfigShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-        ConfigShadow.BackgroundTransparency = 1
-        ConfigShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-        ConfigShadow.Size = UDim2.new(1, 25, 1, 25)
-        ConfigShadow.ZIndex = 99
-        ConfigShadow.Image = "rbxassetid://5554236805"
-        ConfigShadow.ImageColor3 = Colors.NeonRed
-        ConfigShadow.ImageTransparency = 0.6
-        ConfigShadow.ScaleType = Enum.ScaleType.Slice
-        ConfigShadow.SliceCenter = Rect.new(23, 23, 277, 277)
-        ConfigShadow.Parent = ConfigWindow
+        -- Add darker border
+        local ConfigBorder = Instance.new("UIStroke")
+        ConfigBorder.Color = Colors.DarkBorder
+        ConfigBorder.Thickness = 2
+        ConfigBorder.Parent = ConfigWindow
 
         local ConfigTitleBar = Instance.new("Frame")
         ConfigTitleBar.Name = "ConfigTitleBar"
-        ConfigTitleBar.Size = UDim2.new(1, 0, 0, 30)
+        ConfigTitleBar.Size = UDim2.new(1, 0, 0, 25)  -- Reduced height
         ConfigTitleBar.BackgroundColor3 = Colors.DarkBackground
         ConfigTitleBar.BorderSizePixel = 0
         ConfigTitleBar.Parent = ConfigWindow
 
         local ConfigTitleBarCorner = Instance.new("UICorner")
-        ConfigTitleBarCorner.CornerRadius = UDim.new(0, 4)
+        ConfigTitleBarCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner radius
         ConfigTitleBarCorner.Parent = ConfigTitleBar
+
+        -- Add border to title bar
+        local TitleBarBorder = Instance.new("UIStroke")
+        TitleBarBorder.Color = Colors.DarkBorder
+        TitleBarBorder.Thickness = 1
+        TitleBarBorder.Parent = ConfigTitleBar
 
         local ConfigTitle = Instance.new("TextLabel")
         ConfigTitle.Name = "ConfigTitle"
         ConfigTitle.Size = UDim2.new(1, 0, 1, 0)
         ConfigTitle.BackgroundTransparency = 1
-        ConfigTitle.Text = "Configuration Manager"
+        ConfigTitle.Text = "Config Manager"
         ConfigTitle.TextColor3 = Colors.NeonRed
-        ConfigTitle.TextSize = 14
+        ConfigTitle.TextSize = 12  -- Smaller text
         ConfigTitle.Font = Enum.Font.GothamBold
         ConfigTitle.TextXAlignment = Enum.TextXAlignment.Center
         ConfigTitle.Parent = ConfigTitleBar
 
         local ConfigCloseButton = Instance.new("TextButton")
         ConfigCloseButton.Name = "ConfigCloseButton"
-        ConfigCloseButton.Size = UDim2.new(0, 20, 0, 20)
-        ConfigCloseButton.Position = UDim2.new(1, -22, 0, 5)
+        ConfigCloseButton.Size = UDim2.new(0, 18, 0, 18)  -- Smaller button
+        ConfigCloseButton.Position = UDim2.new(1, -20, 0, 3)
         ConfigCloseButton.BackgroundTransparency = 1
         ConfigCloseButton.Text = "X"
         ConfigCloseButton.TextColor3 = Colors.Text
-        ConfigCloseButton.TextSize = 14
+        ConfigCloseButton.TextSize = 12  -- Smaller text
         ConfigCloseButton.Font = Enum.Font.GothamBold
         ConfigCloseButton.Parent = ConfigTitleBar
 
@@ -930,11 +952,11 @@ function DeltaLib:CreateWindow(title, size)
 
         local ConfigContent = Instance.new("ScrollingFrame")
         ConfigContent.Name = "ConfigContent"
-        ConfigContent.Size = UDim2.new(1, -10, 1, -40)
-        ConfigContent.Position = UDim2.new(0, 5, 0, 35)
+        ConfigContent.Size = UDim2.new(1, -10, 1, -35)  -- Adjusted for smaller title bar
+        ConfigContent.Position = UDim2.new(0, 5, 0, 30)
         ConfigContent.BackgroundTransparency = 1
         ConfigContent.BorderSizePixel = 0
-        ConfigContent.ScrollBarThickness = 4
+        ConfigContent.ScrollBarThickness = 3  -- Thinner scrollbar
         ConfigContent.ScrollBarImageColor3 = Colors.NeonRed
         ConfigContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
         ConfigContent.ScrollingEnabled = true
@@ -943,50 +965,56 @@ function DeltaLib:CreateWindow(title, size)
 
         local ConfigLayout = Instance.new("UIListLayout")
         ConfigLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        ConfigLayout.Padding = UDim.new(0, 8)
+        ConfigLayout.Padding = UDim.new(0, 6)  -- Reduced padding
         ConfigLayout.Parent = ConfigContent
 
         local ConfigPadding = Instance.new("UIPadding")
-        ConfigPadding.PaddingTop = UDim.new(0, 8)
-        ConfigPadding.PaddingBottom = UDim.new(0, 8)
+        ConfigPadding.PaddingTop = UDim.new(0, 6)  -- Reduced padding
+        ConfigPadding.PaddingBottom = UDim.new(0, 6)  -- Reduced padding
         ConfigPadding.Parent = ConfigContent
 
-        -- Current Config Section
+        -- Current Config Section - More compact
         local CurrentConfigSection = Instance.new("Frame")
         CurrentConfigSection.Name = "CurrentConfigSection"
-        CurrentConfigSection.Size = UDim2.new(1, 0, 0, 80)
-        CurrentConfigSection.BackgroundColor3 = Colors.LightBackground
+        CurrentConfigSection.Size = UDim2.new(1, 0, 0, 65)  -- Reduced height
+        CurrentConfigSection.BackgroundColor3 = Colors.PanelBackground
         CurrentConfigSection.BorderSizePixel = 0
         CurrentConfigSection.LayoutOrder = 1
         CurrentConfigSection.Parent = ConfigContent
 
         local CurrentConfigCorner = Instance.new("UICorner")
-        CurrentConfigCorner.CornerRadius = UDim.new(0, 4)
+        CurrentConfigCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner
         CurrentConfigCorner.Parent = CurrentConfigSection
+
+        -- Add border to section
+        local SectionBorder = Instance.new("UIStroke")
+        SectionBorder.Color = Colors.DarkBorder
+        SectionBorder.Thickness = 1
+        SectionBorder.Parent = CurrentConfigSection
 
         local CurrentConfigLabel = Instance.new("TextLabel")
         CurrentConfigLabel.Name = "CurrentConfigLabel"
-        CurrentConfigLabel.Size = UDim2.new(1, -10, 0, 20)
-        CurrentConfigLabel.Position = UDim2.new(0, 5, 0, 5)
+        CurrentConfigLabel.Size = UDim2.new(1, -10, 0, 18)  -- Smaller label
+        CurrentConfigLabel.Position = UDim2.new(0, 5, 0, 4)
         CurrentConfigLabel.BackgroundTransparency = 1
         CurrentConfigLabel.Text = "Current Configuration"
         CurrentConfigLabel.TextColor3 = Colors.NeonRed
-        CurrentConfigLabel.TextSize = 12
+        CurrentConfigLabel.TextSize = 11  -- Smaller text
         CurrentConfigLabel.Font = Enum.Font.GothamBold
         CurrentConfigLabel.TextXAlignment = Enum.TextXAlignment.Left
         CurrentConfigLabel.Parent = CurrentConfigSection
 
         local ConfigNameInput = Instance.new("TextBox")
         ConfigNameInput.Name = "ConfigNameInput"
-        ConfigNameInput.Size = UDim2.new(1, -10, 0, 25)
-        ConfigNameInput.Position = UDim2.new(0, 5, 0, 30)
+        ConfigNameInput.Size = UDim2.new(1, -10, 0, 22)  -- Smaller input
+        ConfigNameInput.Position = UDim2.new(0, 5, 0, 25)
         ConfigNameInput.BackgroundColor3 = Colors.DarkBackground
         ConfigNameInput.BorderSizePixel = 0
         ConfigNameInput.PlaceholderText = "Enter config name..."
         ConfigNameInput.Text = CurrentConfig
         ConfigNameInput.TextColor3 = Colors.Text
         ConfigNameInput.PlaceholderColor3 = Colors.SubText
-        ConfigNameInput.TextSize = 12
+        ConfigNameInput.TextSize = 11  -- Smaller text
         ConfigNameInput.Font = Enum.Font.Gotham
         ConfigNameInput.TextXAlignment = Enum.TextXAlignment.Left
         ConfigNameInput.ClearTextOnFocus = false
@@ -996,31 +1024,43 @@ function DeltaLib:CreateWindow(title, size)
         ConfigNameInputCorner.CornerRadius = UDim.new(0, 3)
         ConfigNameInputCorner.Parent = ConfigNameInput
 
+        -- Add border to input
+        local InputBorder = Instance.new("UIStroke")
+        InputBorder.Color = Colors.DarkBorder
+        InputBorder.Thickness = 1
+        InputBorder.Parent = ConfigNameInput
+
         local ConfigNameInputPadding = Instance.new("UIPadding")
-        ConfigNameInputPadding.PaddingLeft = UDim.new(0, 8)
+        ConfigNameInputPadding.PaddingLeft = UDim.new(0, 6)  -- Reduced padding
         ConfigNameInputPadding.Parent = ConfigNameInput
 
-        -- Action Buttons Section
+        -- Action Buttons Section - More compact
         local ActionButtonsSection = Instance.new("Frame")
         ActionButtonsSection.Name = "ActionButtonsSection"
-        ActionButtonsSection.Size = UDim2.new(1, 0, 0, 120)
-        ActionButtonsSection.BackgroundColor3 = Colors.LightBackground
+        ActionButtonsSection.Size = UDim2.new(1, 0, 0, 85)  -- Reduced height
+        ActionButtonsSection.BackgroundColor3 = Colors.PanelBackground
         ActionButtonsSection.BorderSizePixel = 0
         ActionButtonsSection.LayoutOrder = 2
         ActionButtonsSection.Parent = ConfigContent
 
         local ActionButtonsCorner = Instance.new("UICorner")
-        ActionButtonsCorner.CornerRadius = UDim.new(0, 4)
+        ActionButtonsCorner.CornerRadius = UDim.new(0, 3)
         ActionButtonsCorner.Parent = ActionButtonsSection
+
+        -- Add border to section
+        local ActionBorder = Instance.new("UIStroke")
+        ActionBorder.Color = Colors.DarkBorder
+        ActionBorder.Thickness = 1
+        ActionBorder.Parent = ActionButtonsSection
 
         local ActionButtonsLabel = Instance.new("TextLabel")
         ActionButtonsLabel.Name = "ActionButtonsLabel"
-        ActionButtonsLabel.Size = UDim2.new(1, -10, 0, 20)
-        ActionButtonsLabel.Position = UDim2.new(0, 5, 0, 5)
+        ActionButtonsLabel.Size = UDim2.new(1, -10, 0, 18)  -- Smaller label
+        ActionButtonsLabel.Position = UDim2.new(0, 5, 0, 4)
         ActionButtonsLabel.BackgroundTransparency = 1
         ActionButtonsLabel.Text = "Actions"
         ActionButtonsLabel.TextColor3 = Colors.NeonRed
-        ActionButtonsLabel.TextSize = 12
+        ActionButtonsLabel.TextSize = 11
         ActionButtonsLabel.Font = Enum.Font.GothamBold
         ActionButtonsLabel.TextXAlignment = Enum.TextXAlignment.Left
         ActionButtonsLabel.Parent = ActionButtonsSection
@@ -1029,19 +1069,25 @@ function DeltaLib:CreateWindow(title, size)
         local saveDebounce = CreateDebounce(0.5)
         local SaveButton = Instance.new("TextButton")
         SaveButton.Name = "SaveButton"
-        SaveButton.Size = UDim2.new(1, -10, 0, 25)
-        SaveButton.Position = UDim2.new(0, 5, 0, 30)
+        SaveButton.Size = UDim2.new(1, -10, 0, 22)  -- Smaller button
+        SaveButton.Position = UDim2.new(0, 5, 0, 25)
         SaveButton.BackgroundColor3 = Colors.NeonRed
         SaveButton.BorderSizePixel = 0
         SaveButton.Text = "Save Configuration"
         SaveButton.TextColor3 = Colors.Text
-        SaveButton.TextSize = 12
+        SaveButton.TextSize = 11  -- Smaller text
         SaveButton.Font = Enum.Font.Gotham
         SaveButton.Parent = ActionButtonsSection
 
         local SaveButtonCorner = Instance.new("UICorner")
         SaveButtonCorner.CornerRadius = UDim.new(0, 3)
         SaveButtonCorner.Parent = SaveButton
+
+        -- Add border to button
+        local SaveButtonBorder = Instance.new("UIStroke")
+        SaveButtonBorder.Color = Colors.DarkBorder
+        SaveButtonBorder.Thickness = 1
+        SaveButtonBorder.Parent = SaveButton
 
         SafeConnect(SaveButton.MouseButton1Click, function()
             if saveDebounce() then return end
@@ -1059,22 +1105,19 @@ function DeltaLib:CreateWindow(title, size)
                 SaveButton.Text = "✓ Saved!"
                 SaveButton.BackgroundColor3 = Colors.Success
                 
-                task.wait(1)
+                task.wait(0.8)
                 
                 SaveButton.Text = "Save Configuration"
                 SaveButton.BackgroundColor3 = Colors.NeonRed
                 
                 -- Refresh config lists
                 RefreshConfigList()
-                if RefreshAllConfigList then
-                    RefreshAllConfigList()
-                end
             else
                 -- Show error feedback
                 SaveButton.Text = "✗ Failed!"
                 SaveButton.BackgroundColor3 = Colors.Error
                 
-                task.wait(1)
+                task.wait(0.8)
                 
                 SaveButton.Text = "Save Configuration"
                 SaveButton.BackgroundColor3 = Colors.NeonRed
@@ -1085,19 +1128,25 @@ function DeltaLib:CreateWindow(title, size)
         local loadDebounce = CreateDebounce(0.5)
         local LoadButton = Instance.new("TextButton")
         LoadButton.Name = "LoadButton"
-        LoadButton.Size = UDim2.new(1, -10, 0, 25)
-        LoadButton.Position = UDim2.new(0, 5, 0, 60)
+        LoadButton.Size = UDim2.new(1, -10, 0, 22)  -- Smaller button
+        LoadButton.Position = UDim2.new(0, 5, 0, 50)
         LoadButton.BackgroundColor3 = Colors.DarkBackground
         LoadButton.BorderSizePixel = 0
         LoadButton.Text = "Load Configuration"
         LoadButton.TextColor3 = Colors.Text
-        LoadButton.TextSize = 12
+        LoadButton.TextSize = 11
         LoadButton.Font = Enum.Font.Gotham
         LoadButton.Parent = ActionButtonsSection
 
         local LoadButtonCorner = Instance.new("UICorner")
         LoadButtonCorner.CornerRadius = UDim.new(0, 3)
         LoadButtonCorner.Parent = LoadButton
+
+        -- Add border to button
+        local LoadButtonBorder = Instance.new("UIStroke")
+        LoadButtonBorder.Color = Colors.DarkBorder
+        LoadButtonBorder.Thickness = 1
+        LoadButtonBorder.Parent = LoadButton
 
         SafeConnect(LoadButton.MouseButton1Click, function()
             if loadDebounce() then return end
@@ -1115,7 +1164,7 @@ function DeltaLib:CreateWindow(title, size)
                 LoadButton.Text = "✓ Loaded!"
                 LoadButton.BackgroundColor3 = Colors.Success
                 
-                task.wait(1)
+                task.wait(0.8)
                 
                 LoadButton.Text = "Load Configuration"
                 LoadButton.BackgroundColor3 = Colors.DarkBackground
@@ -1124,108 +1173,62 @@ function DeltaLib:CreateWindow(title, size)
                 LoadButton.Text = "✗ Failed!"
                 LoadButton.BackgroundColor3 = Colors.Error
                 
-                task.wait(1)
+                task.wait(0.8)
                 
                 LoadButton.Text = "Load Configuration"
                 LoadButton.BackgroundColor3 = Colors.DarkBackground
             end
         end)
 
-        -- Delete Button with debounce
-        local deleteDebounce = CreateDebounce(0.5)
-        local DeleteButton = Instance.new("TextButton")
-        DeleteButton.Name = "DeleteButton"
-        DeleteButton.Size = UDim2.new(1, -10, 0, 25)
-        DeleteButton.Position = UDim2.new(0, 5, 0, 90)
-        DeleteButton.BackgroundColor3 = Colors.DarkBackground
-        DeleteButton.BorderSizePixel = 0
-        DeleteButton.Text = "Delete Configuration"
-        DeleteButton.TextColor3 = Colors.Text
-        DeleteButton.TextSize = 12
-        DeleteButton.Font = Enum.Font.Gotham
-        DeleteButton.Parent = ActionButtonsSection
-
-        local DeleteButtonCorner = Instance.new("UICorner")
-        DeleteButtonCorner.CornerRadius = UDim.new(0, 3)
-        DeleteButtonCorner.Parent = DeleteButton
-
-        SafeConnect(DeleteButton.MouseButton1Click, function()
-            if deleteDebounce() then return end
-            
-            local configName = ConfigNameInput.Text:gsub("%s+", "")
-            if configName == "" then
-                configName = "default"
-            end
-            
-            if DeleteConfiguration(configName) then
-                if CurrentConfig == configName then
-                    CurrentConfig = "default"
-                    ConfigNameInput.Text = "default"
-                end
-                
-                -- Show success feedback
-                DeleteButton.Text = "✓ Deleted!"
-                DeleteButton.BackgroundColor3 = Colors.Success
-                
-                task.wait(1)
-                
-                DeleteButton.Text = "Delete Configuration"
-                DeleteButton.BackgroundColor3 = Colors.DarkBackground
-                
-                -- Refresh config lists
-                RefreshConfigList()
-                if RefreshAllConfigList then
-                    RefreshAllConfigList()
-                end
-            else
-                -- Show error feedback
-                DeleteButton.Text = "✗ Failed!"
-                DeleteButton.BackgroundColor3 = Colors.Error
-                
-                task.wait(1)
-                
-                DeleteButton.Text = "Delete Configuration"
-                DeleteButton.BackgroundColor3 = Colors.DarkBackground
-            end
-        end)
-
-        -- Config List Section (Window-specific configs)
+        -- Config List Section (Window-specific configs) - More compact
         local ConfigListSection = Instance.new("Frame")
         ConfigListSection.Name = "ConfigListSection"
-        ConfigListSection.Size = UDim2.new(1, 0, 0, configListHeight + 30)
-        ConfigListSection.BackgroundColor3 = Colors.LightBackground
+        ConfigListSection.Size = UDim2.new(1, 0, 0, configListHeight + 25)  -- Reduced height
+        ConfigListSection.BackgroundColor3 = Colors.PanelBackground
         ConfigListSection.BorderSizePixel = 0
         ConfigListSection.LayoutOrder = 3
         ConfigListSection.Parent = ConfigContent
 
         local ConfigListCorner = Instance.new("UICorner")
-        ConfigListCorner.CornerRadius = UDim.new(0, 4)
+        ConfigListCorner.CornerRadius = UDim.new(0, 3)
         ConfigListCorner.Parent = ConfigListSection
+
+        -- Add border to section
+        local ListBorder = Instance.new("UIStroke")
+        ListBorder.Color = Colors.DarkBorder
+        ListBorder.Thickness = 1
+        ListBorder.Parent = ConfigListSection
 
         local ConfigListLabel = Instance.new("TextLabel")
         ConfigListLabel.Name = "ConfigListLabel"
-        ConfigListLabel.Size = UDim2.new(1, -10, 0, 20)
-        ConfigListLabel.Position = UDim2.new(0, 5, 0, 5)
+        ConfigListLabel.Size = UDim2.new(1, -10, 0, 18)
+        ConfigListLabel.Position = UDim2.new(0, 5, 0, 4)
         ConfigListLabel.BackgroundTransparency = 1
-        ConfigListLabel.Text = "Window Configurations (" .. #windowConfigs .. ")"
+        ConfigListLabel.Text = "Configurations (" .. #windowConfigs .. ")"
         ConfigListLabel.TextColor3 = Colors.NeonRed
-        ConfigListLabel.TextSize = 12
+        ConfigListLabel.TextSize = 11
         ConfigListLabel.Font = Enum.Font.GothamBold
         ConfigListLabel.TextXAlignment = Enum.TextXAlignment.Left
         ConfigListLabel.Parent = ConfigListSection
 
         local ConfigList = Instance.new("ScrollingFrame")
         ConfigList.Name = "ConfigList"
-        ConfigList.Size = UDim2.new(1, -10, 0, configListHeight)
-        ConfigList.Position = UDim2.new(0, 5, 0, 30)
+        ConfigList.Size = UDim2.new(1, -10, 0, configListHeight - 5)
+        ConfigList.Position = UDim2.new(0, 5, 0, 25)
         ConfigList.BackgroundColor3 = Colors.DarkBackground
         ConfigList.BorderSizePixel = 0
-        ConfigList.ScrollBarThickness = 4
+        ConfigList.ScrollBarThickness = 3
         ConfigList.ScrollBarImageColor3 = Colors.NeonRed
         ConfigList.AutomaticCanvasSize = Enum.AutomaticSize.Y
         ConfigList.ScrollingEnabled = true
         ConfigList.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
         ConfigList.Parent = ConfigListSection
+
+        -- Add border to list
+        local ConfigListBorder = Instance.new("UIStroke")
+        ConfigListBorder.Color = Colors.DarkBorder
+        ConfigListBorder.Thickness = 1
+        ConfigListBorder.Parent = ConfigList
 
         local ConfigListLayout = Instance.new("UIListLayout")
         ConfigListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1250,17 +1253,17 @@ function DeltaLib:CreateWindow(title, size)
 
             -- Add config items
             local configs = ListConfigurations()
-            ConfigListLabel.Text = "Window Configurations (" .. #configs .. ")"
+            ConfigListLabel.Text = "Configurations (" .. #configs .. ")"
             
             for _, configName in ipairs(configs) do
                 local ConfigItem = Instance.new("TextButton")
                 ConfigItem.Name = "ConfigItem_" .. configName
-                ConfigItem.Size = UDim2.new(1, -10, 0, 25)
-                ConfigItem.BackgroundColor3 = Colors.LightBackground
+                ConfigItem.Size = UDim2.new(1, -10, 0, 22)  -- Smaller button
+                ConfigItem.BackgroundColor3 = Colors.PanelBackground
                 ConfigItem.BorderSizePixel = 0
                 ConfigItem.Text = configName
                 ConfigItem.TextColor3 = Colors.Text
-                ConfigItem.TextSize = 12
+                ConfigItem.TextSize = 11  -- Smaller text
                 ConfigItem.Font = Enum.Font.Gotham
                 ConfigItem.LayoutOrder = _
                 ConfigItem.Parent = ConfigList
@@ -1268,6 +1271,12 @@ function DeltaLib:CreateWindow(title, size)
                 local ConfigItemCorner = Instance.new("UICorner")
                 ConfigItemCorner.CornerRadius = UDim.new(0, 3)
                 ConfigItemCorner.Parent = ConfigItem
+
+                -- Add border to config item
+                local ItemBorder = Instance.new("UIStroke")
+                ItemBorder.Color = Colors.DarkBorder
+                ItemBorder.Thickness = 1
+                ItemBorder.Parent = ConfigItem
 
                 SafeConnect(ConfigItem.MouseButton1Click, function()
                     CurrentConfig = configName
@@ -1277,7 +1286,7 @@ function DeltaLib:CreateWindow(title, size)
                     -- Highlight selected item
                     for _, item in ipairs(ConfigList:GetChildren()) do
                         if item:IsA("TextButton") then
-                            item.BackgroundColor3 = Colors.LightBackground
+                            item.BackgroundColor3 = Colors.PanelBackground
                         end
                     end
                     ConfigItem.BackgroundColor3 = Colors.NeonRed
@@ -1291,21 +1300,17 @@ function DeltaLib:CreateWindow(title, size)
 
                 SafeConnect(ConfigItem.MouseLeave, function()
                     if ConfigItem.BackgroundColor3 ~= Colors.NeonRed then
-                        ConfigItem.BackgroundColor3 = Colors.LightBackground
+                        ConfigItem.BackgroundColor3 = Colors.PanelBackground
                     end
                 end)
             end
-
-            -- Update canvas size
-            task.wait()
-            ConfigList.CanvasSize = UDim2.new(0, 0, 0, ConfigListLayout.AbsoluteContentSize.Y + 10)
         end
 
         -- Refresh button
         local RefreshButton = Instance.new("TextButton")
         RefreshButton.Name = "RefreshButton"
-        RefreshButton.Size = UDim2.new(0, 80, 0, 20)
-        RefreshButton.Position = UDim2.new(1, -85, 0, 5)
+        RefreshButton.Size = UDim2.new(0, 60, 0, 18)  -- Smaller button
+        RefreshButton.Position = UDim2.new(1, -65, 0, 4)
         RefreshButton.BackgroundColor3 = Colors.DarkBackground
         RefreshButton.BorderSizePixel = 0
         RefreshButton.Text = "Refresh"
@@ -1318,133 +1323,19 @@ function DeltaLib:CreateWindow(title, size)
         RefreshButtonCorner.CornerRadius = UDim.new(0, 3)
         RefreshButtonCorner.Parent = RefreshButton
 
+        -- Add border to refresh button
+        local RefreshBorder = Instance.new("UIStroke")
+        RefreshBorder.Color = Colors.DarkBorder
+        RefreshBorder.Thickness = 1
+        RefreshBorder.Parent = RefreshButton
+
         SafeConnect(RefreshButton.MouseButton1Click, function()
             RefreshConfigList()
-            if RefreshAllConfigList then
-                RefreshAllConfigList()
-            end
         end)
-
-        -- All Configs Section (if there are any)
-        if #allConfigs > 0 then
-            local AllConfigsSection = Instance.new("Frame")
-            AllConfigsSection.Name = "AllConfigsSection"
-            AllConfigsSection.Size = UDim2.new(1, 0, 0, 180)
-            AllConfigsSection.BackgroundColor3 = Colors.LightBackground
-            AllConfigsSection.BorderSizePixel = 0
-            AllConfigsSection.LayoutOrder = 4
-            AllConfigsSection.Parent = ConfigContent
-
-            local AllConfigsCorner = Instance.new("UICorner")
-            AllConfigsCorner.CornerRadius = UDim.new(0, 4)
-            AllConfigsCorner.Parent = AllConfigsSection
-
-            local AllConfigsLabel = Instance.new("TextLabel")
-            AllConfigsLabel.Name = "AllConfigsLabel"
-            AllConfigsLabel.Size = UDim2.new(1, -10, 0, 20)
-            AllConfigsLabel.Position = UDim2.new(0, 5, 0, 5)
-            AllConfigsLabel.BackgroundTransparency = 1
-            AllConfigsLabel.Text = "All Configurations (" .. #allConfigs .. ")"
-            AllConfigsLabel.TextColor3 = Colors.NeonRed
-            AllConfigsLabel.TextSize = 12
-            AllConfigsLabel.Font = Enum.Font.GothamBold
-            AllConfigsLabel.TextXAlignment = Enum.TextXAlignment.Left
-            AllConfigsLabel.Parent = AllConfigsSection
-
-            local AllConfigsList = Instance.new("ScrollingFrame")
-            AllConfigsList.Name = "AllConfigsList"
-            AllConfigsList.Size = UDim2.new(1, -10, 0, 150)
-            AllConfigsList.Position = UDim2.new(0, 5, 0, 30)
-            AllConfigsList.BackgroundColor3 = Colors.DarkBackground
-            AllConfigsList.BorderSizePixel = 0
-            AllConfigsList.ScrollBarThickness = 4
-            AllConfigsList.ScrollBarImageColor3 = Colors.NeonRed
-            AllConfigsList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-            AllConfigsList.ScrollingEnabled = true
-            AllConfigsList.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-            AllConfigsList.Parent = AllConfigsSection
-
-            local AllConfigsListLayout = Instance.new("UIListLayout")
-            AllConfigsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            AllConfigsListLayout.Padding = UDim.new(0, 2)
-            AllConfigsListLayout.Parent = AllConfigsList
-
-            local AllConfigsListPadding = Instance.new("UIPadding")
-            AllConfigsListPadding.PaddingLeft = UDim.new(0, 5)
-            AllConfigsListPadding.PaddingRight = UDim.new(0, 5)
-            AllConfigsListPadding.PaddingTop = UDim.new(0, 5)
-            AllConfigsListPadding.PaddingBottom = UDim.new(0, 5)
-            AllConfigsListPadding.Parent = AllConfigsList
-
-            -- Function to refresh all configs list
-            function RefreshAllConfigList()
-                -- Clear existing items
-                for _, child in ipairs(AllConfigsList:GetChildren()) do
-                    if child:IsA("TextButton") then
-                        child:Destroy()
-                    end
-                end
-
-                -- Add all config items
-                local allConfigsData = ListAllConfigurations()
-                AllConfigsLabel.Text = "All Configurations (" .. #allConfigsData .. ")"
-                
-                for _, configData in ipairs(allConfigsData) do
-                    local ConfigItem = Instance.new("TextButton")
-                    ConfigItem.Name = "AllConfigItem_" .. configData.FullName
-                    ConfigItem.Size = UDim2.new(1, -10, 0, 25)
-                    ConfigItem.BackgroundColor3 = Colors.LightBackground
-                    ConfigItem.BorderSizePixel = 0
-                    ConfigItem.Text = configData.FullName
-                    ConfigItem.TextColor3 = Colors.SubText
-                    ConfigItem.TextSize = 12
-                    ConfigItem.Font = Enum.Font.Gotham
-                    ConfigItem.LayoutOrder = _
-                    ConfigItem.Parent = AllConfigsList
-
-                    local ConfigItemCorner = Instance.new("UICorner")
-                    ConfigItemCorner.CornerRadius = UDim.new(0, 3)
-                    ConfigItemCorner.Parent = ConfigItem
-
-                    SafeConnect(ConfigItem.MouseButton1Click, function()
-                        -- Try to load this config
-                        ConfigNameInput.Text = configData.BaseName
-                        CurrentConfig = configData.BaseName
-                        
-                        if LoadConfiguration(configData.BaseName) then
-                            -- Success
-                            ConfigItem.BackgroundColor3 = Colors.Success
-                            task.wait(0.5)
-                            ConfigItem.BackgroundColor3 = Colors.LightBackground
-                        else
-                            -- Config might be for different window
-                            ConfigItem.BackgroundColor3 = Colors.Error
-                            task.wait(0.5)
-                            ConfigItem.BackgroundColor3 = Colors.LightBackground
-                        end
-                    end)
-
-                    SafeConnect(ConfigItem.MouseEnter, function()
-                        ConfigItem.BackgroundColor3 = Colors.LightNeonRed
-                    end)
-
-                    SafeConnect(ConfigItem.MouseLeave, function()
-                        ConfigItem.BackgroundColor3 = Colors.LightBackground
-                    end)
-                end
-
-                -- Update canvas size
-                task.wait()
-                AllConfigsList.CanvasSize = UDim2.new(0, 0, 0, AllConfigsListLayout.AbsoluteContentSize.Y + 10)
-            end
-
-            -- Initial refresh
-            RefreshAllConfigList()
-        end
 
         -- Auto-size the content
         SafeConnect(ConfigLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-            ConfigContent.CanvasSize = UDim2.new(0, 0, 0, ConfigLayout.AbsoluteContentSize.Y + 16)
+            ConfigContent.CanvasSize = UDim2.new(0, 0, 0, ConfigLayout.AbsoluteContentSize.Y + 12)
         end)
 
         -- Initial refresh
@@ -1501,6 +1392,12 @@ function DeltaLib:CreateWindow(title, size)
         local TabButtonCorner = Instance.new("UICorner")
         TabButtonCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
         TabButtonCorner.Parent = TabButton
+
+        -- Add border to tab button
+        local TabButtonStroke = Instance.new("UIStroke")
+        TabButtonStroke.Color = Colors.DarkBorder
+        TabButtonStroke.Thickness = 1
+        TabButtonStroke.Parent = TabButton
 
         -- Tab Content
         local TabContent = Instance.new("ScrollingFrame")
@@ -1591,6 +1488,12 @@ function DeltaLib:CreateWindow(title, size)
             local SectionCorner = Instance.new("UICorner")
             SectionCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
             SectionCorner.Parent = SectionContainer
+
+            -- Add border to section
+            local SectionStroke = Instance.new("UIStroke")
+            SectionStroke.Color = Colors.DarkBorder
+            SectionStroke.Thickness = 1
+            SectionStroke.Parent = SectionContainer
 
             -- Section Title
             local SectionTitle = Instance.new("TextLabel")
@@ -1699,6 +1602,12 @@ function DeltaLib:CreateWindow(title, size)
                 ButtonCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
                 ButtonCorner.Parent = Button
 
+                -- Add border to button
+                local ButtonStroke = Instance.new("UIStroke")
+                ButtonStroke.Color = Colors.DarkBorder
+                ButtonStroke.Thickness = 1
+                ButtonStroke.Parent = Button
+
                 -- Button Effects
                 SafeConnect(Button.MouseEnter, function()
                     Button.BackgroundColor3 = Colors.NeonRed
@@ -1758,6 +1667,12 @@ function DeltaLib:CreateWindow(title, size)
                 local ToggleButtonCorner = Instance.new("UICorner")
                 ToggleButtonCorner.CornerRadius = UDim.new(1, 0)
                 ToggleButtonCorner.Parent = ToggleButton
+
+                -- Add border to toggle
+                local ToggleStroke = Instance.new("UIStroke")
+                ToggleStroke.Color = Colors.DarkBorder
+                ToggleStroke.Thickness = 1
+                ToggleStroke.Parent = ToggleButton
 
                 local ToggleCircle = Instance.new("Frame")
                 ToggleCircle.Name = "ToggleCircle"
@@ -1880,6 +1795,12 @@ function DeltaLib:CreateWindow(title, size)
                 local SliderBackgroundCorner = Instance.new("UICorner")
                 SliderBackgroundCorner.CornerRadius = UDim.new(1, 0)
                 SliderBackgroundCorner.Parent = SliderBackground
+
+                -- Add border to slider background
+                local SliderBackgroundStroke = Instance.new("UIStroke")
+                SliderBackgroundStroke.Color = Colors.DarkBorder
+                SliderBackgroundStroke.Thickness = 1
+                SliderBackgroundStroke.Parent = SliderBackground
 
                 local SliderFill = Instance.new("Frame")
                 SliderFill.Name = "SliderFill"
@@ -2006,12 +1927,12 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownButton.Parent = DropdownContainer
 
                 local DropdownButtonCorner = Instance.new("UICorner")
-                DropdownButtonCorner.CornerRadius = UDim.new(0, 4)
+                DropdownButtonCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner
                 DropdownButtonCorner.Parent = DropdownButton
 
                 local DropdownButtonStroke = Instance.new("UIStroke")
                 DropdownButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                DropdownButtonStroke.Color = Colors.Border
+                DropdownButtonStroke.Color = Colors.DarkBorder  -- Darker border
                 DropdownButtonStroke.Thickness = 1
                 DropdownButtonStroke.Parent = DropdownButton
 
@@ -2023,7 +1944,7 @@ function DeltaLib:CreateWindow(title, size)
                 SelectedTextBox.Text = default
                 SelectedTextBox.PlaceholderText = "..."
                 SelectedTextBox.TextColor3 = Colors.Text
-                SelectedTextBox.TextSize = 14
+                SelectedTextBox.TextSize = 13  -- Slightly smaller
                 SelectedTextBox.Font = Enum.Font.Gotham
                 SelectedTextBox.TextXAlignment = Enum.TextXAlignment.Left
                 SelectedTextBox.ClearTextOnFocus = false
@@ -2032,8 +1953,8 @@ function DeltaLib:CreateWindow(title, size)
 
                 local DropdownArrow = Instance.new("ImageLabel")
                 DropdownArrow.Name = "DropdownArrow"
-                DropdownArrow.Size = UDim2.new(0, 20, 0, 20)
-                DropdownArrow.Position = UDim2.new(1, -25, 0, 2)
+                DropdownArrow.Size = UDim2.new(0, 18, 0, 18)  -- Smaller arrow
+                DropdownArrow.Position = UDim2.new(1, -24, 0, 3)
                 DropdownArrow.BackgroundTransparency = 1
                 DropdownArrow.Image = "rbxassetid://6031094670"
                 DropdownArrow.ImageColor3 = Colors.NeonRed
@@ -2052,12 +1973,12 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownList.Parent = DropdownContainer
 
                 local DropdownListCorner = Instance.new("UICorner")
-                DropdownListCorner.CornerRadius = UDim.new(0, 4)
+                DropdownListCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner
                 DropdownListCorner.Parent = DropdownList
 
                 local DropdownListStroke = Instance.new("UIStroke")
                 DropdownListStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                DropdownListStroke.Color = Colors.NeonRed
+                DropdownListStroke.Color = Colors.DarkBorder  -- Darker border
                 DropdownListStroke.Thickness = 1
                 DropdownListStroke.Parent = DropdownList
 
@@ -2067,7 +1988,7 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownScrollFrame.Position = UDim2.new(0, 5, 0, 5)
                 DropdownScrollFrame.BackgroundTransparency = 1
                 DropdownScrollFrame.BorderSizePixel = 0
-                DropdownScrollFrame.ScrollBarThickness = 4
+                DropdownScrollFrame.ScrollBarThickness = 3  -- Thinner scrollbar
                 DropdownScrollFrame.ScrollBarImageColor3 = Colors.NeonRed
                 DropdownScrollFrame.BottomImage = ""
                 DropdownScrollFrame.TopImage = ""
@@ -2076,14 +1997,14 @@ function DeltaLib:CreateWindow(title, size)
 
                 local DropdownOptionsLayout = Instance.new("UIListLayout")
                 DropdownOptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                DropdownOptionsLayout.Padding = UDim.new(0, 5)
+                DropdownOptionsLayout.Padding = UDim.new(0, 4)  -- Less padding
                 DropdownOptionsLayout.Parent = DropdownScrollFrame
 
                 local DropdownOptionsPadding = Instance.new("UIPadding")
                 DropdownOptionsPadding.PaddingLeft = UDim.new(0, 5)
                 DropdownOptionsPadding.PaddingRight = UDim.new(0, 5)
-                DropdownOptionsPadding.PaddingTop = UDim.new(0, 5)
-                DropdownOptionsPadding.PaddingBottom = UDim.new(0, 5)
+                DropdownOptionsPadding.PaddingTop = UDim.new(0, 4)  -- Less padding
+                DropdownOptionsPadding.PaddingBottom = UDim.new(0, 4)  -- Less padding
                 DropdownOptionsPadding.Parent = DropdownScrollFrame
 
                 local isOpen = false
@@ -2095,18 +2016,18 @@ function DeltaLib:CreateWindow(title, size)
                     isOpen = not isOpen
 
                     TweenService:Create(DropdownArrow, TweenInfo.new(0.3), {Rotation = isOpen and 90 or 270}):Play()
-                    TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = isOpen and Colors.NeonRed or Colors.Border}):Play()
+                    TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = isOpen and Colors.NeonRed or Colors.DarkBorder}):Play()
 
                     if isOpen then
                         DropdownList.Visible = true
                         DropdownList.ZIndex = 999999
 
-                        local optionsHeight = math.min(#options * 30 + 10, 150)
+                        local optionsHeight = math.min(#options * 28 + 8, 140)  -- More compact
 
                         TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
                         TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
 
-                        DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 10)
+                        DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
 
                         task.delay(0.3, function() isAnimating = false end)
                     else
@@ -2125,8 +2046,8 @@ function DeltaLib:CreateWindow(title, size)
                 local function CreateOptionButton(option, index)
                     local OptionButton = Instance.new("TextButton")
                     OptionButton.Name = "Option_" .. option
-                    OptionButton.Size = UDim2.new(1, 0, 0, 25)
-                    OptionButton.BackgroundColor3 = Colors.DarkBackground
+                    OptionButton.Size = UDim2.new(1, 0, 0, 24)  -- Smaller option button
+                    OptionButton.BackgroundColor3 = Colors.PanelBackground
                     OptionButton.BorderSizePixel = 0
                     OptionButton.Text = ""
                     OptionButton.LayoutOrder = index
@@ -2134,17 +2055,23 @@ function DeltaLib:CreateWindow(title, size)
                     OptionButton.Parent = DropdownScrollFrame
 
                     local OptionButtonCorner = Instance.new("UICorner")
-                    OptionButtonCorner.CornerRadius = UDim.new(0, 4)
+                    OptionButtonCorner.CornerRadius = UDim.new(0, 3)
                     OptionButtonCorner.Parent = OptionButton
+
+                    -- Add border to option button
+                    local OptionButtonStroke = Instance.new("UIStroke")
+                    OptionButtonStroke.Color = Colors.DarkBorder
+                    OptionButtonStroke.Thickness = 1
+                    OptionButtonStroke.Parent = OptionButton
 
                     local OptionText = Instance.new("TextLabel")
                     OptionText.Name = "OptionText"
                     OptionText.Size = UDim2.new(1, -10, 1, 0)
-                    OptionText.Position = UDim2.new(0, 10, 0, 0)
+                    OptionText.Position = UDim2.new(0, 8, 0, 0)  -- Less padding
                     OptionText.BackgroundTransparency = 1
                     OptionText.Text = option
                     OptionText.TextColor3 = Colors.Text
-                    OptionText.TextSize = 14
+                    OptionText.TextSize = 13  -- Smaller text
                     OptionText.Font = Enum.Font.Gotham
                     OptionText.TextXAlignment = Enum.TextXAlignment.Left
                     OptionText.ZIndex = 1000002
@@ -2251,11 +2178,11 @@ function DeltaLib:CreateWindow(title, size)
                         table.insert(OptionButtons, CreateOptionButton(option, i))
                     end
 
-                    DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 10)
+                    DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
                     SelectedTextBox.Text = default
 
                     if isOpen then
-                        local optionsHeight = math.min(#options * 30 + 10, 150)
+                        local optionsHeight = math.min(#options * 28 + 8, 140)
                         DropdownList.Size = UDim2.new(1, 0, 0, optionsHeight)
                         DropdownContainer.Size = UDim2.new(1, 0, 0, 40 + optionsHeight)
                     end
@@ -2310,6 +2237,12 @@ function DeltaLib:CreateWindow(title, size)
                 local TextBoxCorner = Instance.new("UICorner")
                 TextBoxCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
                 TextBoxCorner.Parent = TextBox
+
+                -- Add border to textbox
+                local TextBoxStroke = Instance.new("UIStroke")
+                TextBoxStroke.Color = Colors.DarkBorder
+                TextBoxStroke.Thickness = 1
+                TextBoxStroke.Parent = TextBox
 
                 -- TextBox Logic with error handling
                 SafeConnect(TextBox.Focused, function()
@@ -2426,3 +2359,4 @@ function DeltaLib:CreateWindow(title, size)
 end
 
 return DeltaLib
+[file content end]
