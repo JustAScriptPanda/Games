@@ -15,7 +15,7 @@ local ConfigSystem = {}
 ConfigSystem.Version = "1.2"
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
-ConfigSystem.AutoSaveInterval = 30 -- seconds
+ConfigSystem.AutoSaveInterval = .1
 
 -- Track open config managers to prevent spam
 local OpenConfigManagers = {}
