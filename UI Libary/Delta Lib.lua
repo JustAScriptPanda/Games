@@ -1,4 +1,4 @@
---[file name]:DeltaLib.lua
+--[file name]:nil
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -12,7 +12,7 @@ local HttpService = cloneref(game:GetService("HttpService"))
 
 -- Configuration System
 local ConfigSystem = {}
-ConfigSystem.Version = "1.3"
+ConfigSystem.Version = "1.4" -- Updated version
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
 ConfigSystem.AutoSaveInterval = 0.1 -- seconds
@@ -1748,7 +1748,7 @@ function DeltaLib:CreateWindow(title, size)
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.Parent = SectionContainer
 
-            -- Section Content with Scrolling - FIXED: Set ClipsDescendants to false
+            -- Section Content with Scrolling
             local SectionScrollFrame = Instance.new("ScrollingFrame")
             SectionScrollFrame.Name = "SectionScrollFrame"
             SectionScrollFrame.Size = UDim2.new(1, -16, 0, 80) -- Initial height, will be adjusted
@@ -1761,7 +1761,6 @@ function DeltaLib:CreateWindow(title, size)
             SectionScrollFrame.ScrollingEnabled = true
             SectionScrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
             SectionScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
-            SectionScrollFrame.ClipsDescendants = false -- FIX: Allow dropdown to overflow
             SectionScrollFrame.Parent = SectionContainer
 
             local SectionContent = Instance.new("Frame")
@@ -1864,7 +1863,6 @@ function DeltaLib:CreateWindow(title, size)
 
                 local ButtonFunctions = {}
                 ButtonFunctions.Object = ButtonContainer
-                
 
                 function ButtonFunctions:SetText(newText)
                     pcall(function()
@@ -1974,7 +1972,6 @@ function DeltaLib:CreateWindow(title, size)
 
                 local ToggleFunctions = {}
                 ToggleFunctions.Object = ToggleContainer
-                
 
                 function ToggleFunctions:SetState(state)
                     Enabled = state
@@ -2122,7 +2119,6 @@ function DeltaLib:CreateWindow(title, size)
 
                 local SliderFunctions = {}
                 SliderFunctions.Object = SliderContainer
-                
 
                 function SliderFunctions:SetValue(value)
                     UpdateSlider(value)
@@ -2135,18 +2131,15 @@ function DeltaLib:CreateWindow(title, size)
                 return SliderFunctions
             end
 
-            -- Improved Dropdown Creation Function
+            -- REGULAR DROPDOWN (SINGLE SELECT)
             function Section:AddDropdown(dropdownText, options, default, callback)
                 local DropdownFunctions = {}
                 options = options or {}
                 default = default or options[1] or ""
                 callback = callback or function() end
 
-                -- Create a unique ID for this dropdown
-                local dropdownId = "Dropdown_" .. tostring(math.random(1, 10000))
-                
                 local DropdownContainer = Instance.new("Frame")
-                DropdownContainer.Name = dropdownId
+                DropdownContainer.Name = "DropdownContainer"
                 DropdownContainer.Size = UDim2.new(1, 0, 0, 40)
                 DropdownContainer.BackgroundTransparency = 1
                 DropdownContainer.Parent = SectionContent
@@ -2169,7 +2162,6 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownButton.BackgroundColor3 = Colors.DarkBackground
                 DropdownButton.BorderSizePixel = 0
                 DropdownButton.Text = ""
-                DropdownButton.ZIndex = 10
                 DropdownButton.Parent = DropdownContainer
 
                 local DropdownButtonCorner = Instance.new("UICorner")
@@ -2195,7 +2187,6 @@ function DeltaLib:CreateWindow(title, size)
                 SelectedTextBox.TextXAlignment = Enum.TextXAlignment.Left
                 SelectedTextBox.ClearTextOnFocus = false
                 SelectedTextBox.TextEditable = false
-                SelectedTextBox.ZIndex = 11
                 SelectedTextBox.Parent = DropdownButton
 
                 local DropdownArrow = Instance.new("ImageLabel")
@@ -2206,19 +2197,18 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownArrow.Image = "rbxassetid://6031094670"
                 DropdownArrow.ImageColor3 = Colors.NeonRed
                 DropdownArrow.Rotation = 270
-                DropdownArrow.ZIndex = 11
                 DropdownArrow.Parent = DropdownButton
 
-                -- Create dropdown list outside of the scrolling frame
                 local DropdownList = Instance.new("Frame")
                 DropdownList.Name = "DropdownList"
                 DropdownList.Size = UDim2.new(1, 0, 0, 0)
+                DropdownList.Position = UDim2.new(0, 0, 0, 45)
                 DropdownList.BackgroundColor3 = Colors.DarkBackground
                 DropdownList.BorderSizePixel = 0
                 DropdownList.Visible = false
-                DropdownList.ZIndex = 1000 -- High z-index to appear above everything
-                DropdownList.ClipsDescendants = false -- Allow it to overflow
-                DropdownList.Parent = MainFrame -- Parent to main frame instead of container
+                DropdownList.ZIndex = 1000
+                DropdownList.ClipsDescendants = true
+                DropdownList.Parent = DropdownContainer
 
                 local DropdownListCorner = Instance.new("UICorner")
                 DropdownListCorner.CornerRadius = UDim.new(0, 3)
@@ -2258,18 +2248,6 @@ function DeltaLib:CreateWindow(title, size)
                 local isOpen = false
                 local isAnimating = false
 
-                -- Function to update dropdown position
-                local function UpdateDropdownPosition()
-                    if not DropdownButton then return end
-                    
-                    local buttonPosition = DropdownButton.AbsolutePosition
-                    local buttonSize = DropdownButton.AbsoluteSize
-                    
-                    -- Position dropdown below the button
-                    DropdownList.Position = UDim2.new(0, buttonPosition.X, 0, buttonPosition.Y + buttonSize.Y)
-                    DropdownList.Size = UDim2.new(0, buttonSize.X, 0, DropdownList.AbsoluteSize.Y)
-                end
-
                 local function ToggleDropdown()
                     if isAnimating then return end
                     isAnimating = true
@@ -2279,18 +2257,19 @@ function DeltaLib:CreateWindow(title, size)
                     TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = isOpen and Colors.NeonRed or Colors.DarkBorder}):Play()
 
                     if isOpen then
-                        UpdateDropdownPosition()
                         DropdownList.Visible = true
-                        
+
                         local optionsHeight = math.min(#options * 28 + 8, 140)
-                        DropdownList.Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, 0)
-                        
-                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, optionsHeight)}):Play()
+
+                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
+                        TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
+
                         DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
 
                         task.delay(0.3, function() isAnimating = false end)
                     else
-                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, 0)}):Play()
+                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+                        TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40)}):Play()
 
                         task.delay(0.3, function()
                             DropdownList.Visible = false
@@ -2316,7 +2295,6 @@ function DeltaLib:CreateWindow(title, size)
                     OptionButtonCorner.CornerRadius = UDim.new(0, 3)
                     OptionButtonCorner.Parent = OptionButton
 
-                    -- Add border to option button
                     local OptionButtonStroke = Instance.new("UIStroke")
                     OptionButtonStroke.Color = Colors.DarkBorder
                     OptionButtonStroke.Thickness = 1
@@ -2393,13 +2371,9 @@ function DeltaLib:CreateWindow(title, size)
                     end
                 end)
 
-                -- Clean up when destroyed
                 DropdownContainer.AncestryChanged:Connect(function(_, parent)
-                    if not parent then
-                        if globalClickConnection then
-                            globalClickConnection:Disconnect()
-                        end
-                        SafeDestroy(DropdownList)
+                    if not parent and globalClickConnection then
+                        globalClickConnection:Disconnect()
                     end
                 end)
 
@@ -2445,7 +2419,433 @@ function DeltaLib:CreateWindow(title, size)
 
                     if isOpen then
                         local optionsHeight = math.min(#options * 28 + 8, 140)
-                        DropdownList.Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, optionsHeight)
+                        DropdownList.Size = UDim2.new(1, 0, 0, optionsHeight)
+                        DropdownContainer.Size = UDim2.new(1, 0, 0, 40 + optionsHeight)
+                    end
+                end
+
+                return DropdownFunctions
+            end
+
+            -- MULTI-SELECT DROPDOWN (NEW FEATURE)
+            function Section:AddMultiDropdown(dropdownText, options, default, callback, multiChoose)
+                local DropdownFunctions = {}
+                options = options or {}
+                default = default or {}
+                callback = callback or function() end
+                multiChoose = multiChoose == nil and true or multiChoose
+
+                local DropdownContainer = Instance.new("Frame")
+                DropdownContainer.Name = "MultiDropdownContainer"
+                DropdownContainer.Size = UDim2.new(1, 0, 0, 40)
+                DropdownContainer.BackgroundTransparency = 1
+                DropdownContainer.Parent = SectionContent
+
+                local DropdownLabel = Instance.new("TextLabel")
+                DropdownLabel.Name = "DropdownLabel"
+                DropdownLabel.Size = UDim2.new(1, 0, 0, 20)
+                DropdownLabel.BackgroundTransparency = 1
+                DropdownLabel.Text = dropdownText .. " (Multi)"
+                DropdownLabel.TextColor3 = Colors.Text
+                DropdownLabel.TextSize = 14
+                DropdownLabel.Font = Enum.Font.Gotham
+                DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+                DropdownLabel.Parent = DropdownContainer
+
+                local DropdownButton = Instance.new("TextButton")
+                DropdownButton.Name = "DropdownButton"
+                DropdownButton.Size = UDim2.new(1, 0, 0, 25)
+                DropdownButton.Position = UDim2.new(0, 0, 0, 20)
+                DropdownButton.BackgroundColor3 = Colors.DarkBackground
+                DropdownButton.BorderSizePixel = 0
+                DropdownButton.Text = ""
+                DropdownButton.Parent = DropdownContainer
+
+                local DropdownButtonCorner = Instance.new("UICorner")
+                DropdownButtonCorner.CornerRadius = UDim.new(0, 3)
+                DropdownButtonCorner.Parent = DropdownButton
+
+                local DropdownButtonStroke = Instance.new("UIStroke")
+                DropdownButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                DropdownButtonStroke.Color = Colors.DarkBorder
+                DropdownButtonStroke.Thickness = 1
+                DropdownButtonStroke.Parent = DropdownButton
+
+                local SelectedTextBox = Instance.new("TextBox")
+                SelectedTextBox.Name = "SelectedTextBox"
+                SelectedTextBox.Size = UDim2.new(1, -50, 1, 0)
+                SelectedTextBox.Position = UDim2.new(0, 10, 0, 0)
+                SelectedTextBox.BackgroundTransparency = 1
+                SelectedTextBox.Text = ""
+                SelectedTextBox.PlaceholderText = "Select multiple..."
+                SelectedTextBox.TextColor3 = Colors.Text
+                SelectedTextBox.TextSize = 13
+                SelectedTextBox.Font = Enum.Font.Gotham
+                SelectedTextBox.TextXAlignment = Enum.TextXAlignment.Left
+                SelectedTextBox.ClearTextOnFocus = false
+                SelectedTextBox.TextEditable = false
+                SelectedTextBox.Parent = DropdownButton
+
+                local DropdownArrow = Instance.new("ImageLabel")
+                DropdownArrow.Name = "DropdownArrow"
+                DropdownArrow.Size = UDim2.new(0, 18, 0, 18)
+                DropdownArrow.Position = UDim2.new(1, -24, 0, 3)
+                DropdownArrow.BackgroundTransparency = 1
+                DropdownArrow.Image = "rbxassetid://6031094670"
+                DropdownArrow.ImageColor3 = Colors.NeonRed
+                DropdownArrow.Rotation = 270
+                DropdownArrow.Parent = DropdownButton
+
+                local DropdownList = Instance.new("Frame")
+                DropdownList.Name = "DropdownList"
+                DropdownList.Size = UDim2.new(1, 0, 0, 0)
+                DropdownList.Position = UDim2.new(0, 0, 0, 45)
+                DropdownList.BackgroundColor3 = Colors.DarkBackground
+                DropdownList.BorderSizePixel = 0
+                DropdownList.Visible = false
+                DropdownList.ZIndex = 1000
+                DropdownList.ClipsDescendants = true
+                DropdownList.Parent = DropdownContainer
+
+                local DropdownListCorner = Instance.new("UICorner")
+                DropdownListCorner.CornerRadius = UDim.new(0, 3)
+                DropdownListCorner.Parent = DropdownList
+
+                local DropdownListStroke = Instance.new("UIStroke")
+                DropdownListStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                DropdownListStroke.Color = Colors.DarkBorder
+                DropdownListStroke.Thickness = 1
+                DropdownListStroke.Parent = DropdownList
+
+                local DropdownScrollFrame = Instance.new("ScrollingFrame")
+                DropdownScrollFrame.Name = "DropdownScrollFrame"
+                DropdownScrollFrame.Size = UDim2.new(1, -10, 1, -10)
+                DropdownScrollFrame.Position = UDim2.new(0, 5, 0, 5)
+                DropdownScrollFrame.BackgroundTransparency = 1
+                DropdownScrollFrame.BorderSizePixel = 0
+                DropdownScrollFrame.ScrollBarThickness = 3
+                DropdownScrollFrame.ScrollBarImageColor3 = Colors.NeonRed
+                DropdownScrollFrame.BottomImage = ""
+                DropdownScrollFrame.TopImage = ""
+                DropdownScrollFrame.ZIndex = 1001
+                DropdownScrollFrame.Parent = DropdownList
+
+                local DropdownOptionsLayout = Instance.new("UIListLayout")
+                DropdownOptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                DropdownOptionsLayout.Padding = UDim.new(0, 4)
+                DropdownOptionsLayout.Parent = DropdownScrollFrame
+
+                local DropdownOptionsPadding = Instance.new("UIPadding")
+                DropdownOptionsPadding.PaddingLeft = UDim.new(0, 5)
+                DropdownOptionsPadding.PaddingRight = UDim.new(0, 5)
+                DropdownOptionsPadding.PaddingTop = UDim.new(0, 4)
+                DropdownOptionsPadding.PaddingBottom = UDim.new(0, 4)
+                DropdownOptionsPadding.Parent = DropdownScrollFrame
+
+                local isOpen = false
+                local isAnimating = false
+                local selectedOptions = {}
+
+                -- Initialize with default options
+                for _, option in ipairs(default) do
+                    if table.find(options, option) then
+                        selectedOptions[option] = true
+                    end
+                end
+
+                local function UpdateSelectedText()
+                    local selectedList = {}
+                    for option, selected in pairs(selectedOptions) do
+                        if selected then
+                            table.insert(selectedList, option)
+                        end
+                    end
+                    
+                    if #selectedList == 0 then
+                        SelectedTextBox.Text = ""
+                        SelectedTextBox.PlaceholderText = "Select multiple..."
+                    else
+                        if #selectedList <= 2 then
+                            SelectedTextBox.Text = table.concat(selectedList, ", ")
+                        else
+                            SelectedTextBox.Text = #selectedList .. " selected"
+                        end
+                    end
+                end
+
+                UpdateSelectedText()
+
+                local function ToggleDropdown()
+                    if isAnimating then return end
+                    isAnimating = true
+                    isOpen = not isOpen
+
+                    TweenService:Create(DropdownArrow, TweenInfo.new(0.3), {Rotation = isOpen and 90 or 270}):Play()
+                    TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = isOpen and Colors.NeonRed or Colors.DarkBorder}):Play()
+
+                    if isOpen then
+                        DropdownList.Visible = true
+
+                        local optionsHeight = math.min(#options * 28 + 8, 140)
+
+                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
+                        TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
+
+                        DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
+
+                        task.delay(0.3, function() isAnimating = false end)
+                    else
+                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+                        TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+
+                        task.delay(0.3, function()
+                            DropdownList.Visible = false
+                            isAnimating = false
+                        end)
+                    end
+                end
+
+                local OptionButtons = {}
+                local OptionCheckmarks = {}
+
+                local function CreateOptionButton(option, index)
+                    local OptionButton = Instance.new("TextButton")
+                    OptionButton.Name = "Option_" .. option
+                    OptionButton.Size = UDim2.new(1, 0, 0, 24)
+                    OptionButton.BackgroundColor3 = Colors.PanelBackground
+                    OptionButton.BorderSizePixel = 0
+                    OptionButton.Text = ""
+                    OptionButton.LayoutOrder = index
+                    OptionButton.ZIndex = 1002
+                    OptionButton.Parent = DropdownScrollFrame
+
+                    local OptionButtonCorner = Instance.new("UICorner")
+                    OptionButtonCorner.CornerRadius = UDim.new(0, 3)
+                    OptionButtonCorner.Parent = OptionButton
+
+                    local OptionButtonStroke = Instance.new("UIStroke")
+                    OptionButtonStroke.Color = Colors.DarkBorder
+                    OptionButtonStroke.Thickness = 1
+                    OptionButtonStroke.Parent = OptionButton
+
+                    local OptionText = Instance.new("TextLabel")
+                    OptionText.Name = "OptionText"
+                    OptionText.Size = UDim2.new(1, -30, 1, 0)
+                    OptionText.Position = UDim2.new(0, 8, 0, 0)
+                    OptionText.BackgroundTransparency = 1
+                    OptionText.Text = option
+                    OptionText.TextColor3 = Colors.Text
+                    OptionText.TextSize = 13
+                    OptionText.Font = Enum.Font.Gotham
+                    OptionText.TextXAlignment = Enum.TextXAlignment.Left
+                    OptionText.ZIndex = 1003
+                    OptionText.Parent = OptionButton
+
+                    -- Checkbox for multi-select
+                    local Checkbox = Instance.new("Frame")
+                    Checkbox.Name = "Checkbox"
+                    Checkbox.Size = UDim2.new(0, 14, 0, 14)
+                    Checkbox.Position = UDim2.new(1, -20, 0.5, -7)
+                    Checkbox.BackgroundColor3 = Colors.DarkBackground
+                    Checkbox.BorderSizePixel = 0
+                    Checkbox.ZIndex = 1003
+                    Checkbox.Parent = OptionButton
+
+                    local CheckboxCorner = Instance.new("UICorner")
+                    CheckboxCorner.CornerRadius = UDim.new(0, 2)
+                    CheckboxCorner.Parent = Checkbox
+
+                    local CheckboxStroke = Instance.new("UIStroke")
+                    CheckboxStroke.Color = Colors.DarkBorder
+                    CheckboxStroke.Thickness = 1
+                    CheckboxStroke.Parent = Checkbox
+
+                    local Checkmark = Instance.new("ImageLabel")
+                    Checkmark.Name = "Checkmark"
+                    Checkmark.Size = UDim2.new(0, 10, 0, 10)
+                    Checkmark.Position = UDim2.new(0, 2, 0, 2)
+                    Checkmark.BackgroundTransparency = 1
+                    Checkmark.Image = "rbxassetid://6031094667"
+                    Checkmark.ImageColor3 = Colors.NeonRed
+                    Checkmark.Visible = selectedOptions[option] or false
+                    Checkmark.ZIndex = 1004
+                    Checkmark.Parent = Checkbox
+
+                    OptionCheckmarks[option] = Checkmark
+
+                    OptionButton.MouseButton1Down:Connect(function()
+                        if isAnimating then return end
+                        
+                        if multiChoose then
+                            -- Toggle selection for multi-select
+                            selectedOptions[option] = not selectedOptions[option]
+                            Checkmark.Visible = selectedOptions[option]
+                        else
+                            -- Single select behavior
+                            for opt, _ in pairs(selectedOptions) do
+                                selectedOptions[opt] = false
+                                if OptionCheckmarks[opt] then
+                                    OptionCheckmarks[opt].Visible = false
+                                end
+                            end
+                            selectedOptions[option] = true
+                            Checkmark.Visible = true
+                        end
+                        
+                        UpdateSelectedText()
+                        task.spawn(function()
+                            -- Get current selected options
+                            local currentSelected = {}
+                            for opt, selected in pairs(selectedOptions) do
+                                if selected then
+                                    table.insert(currentSelected, opt)
+                                end
+                            end
+                            callback(currentSelected)
+                        end)
+                    end)
+
+                    return OptionButton
+                end
+
+                for i, option in ipairs(options) do
+                    table.insert(OptionButtons, CreateOptionButton(option, i))
+                end
+
+                DropdownButton.MouseButton1Click:Connect(ToggleDropdown)
+
+                local globalClickConnection
+                globalClickConnection = UserInputService.InputBegan:Connect(function(input)
+                    if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.UserInputType ~= Enum.UserInputType.Touch then return end
+                    if not isOpen then return end
+
+                    task.wait(0.05)
+
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local inButton = (
+                        mousePos.X >= DropdownButton.AbsolutePosition.X and 
+                        mousePos.X <= DropdownButton.AbsolutePosition.X + DropdownButton.AbsoluteSize.X and
+                        mousePos.Y >= DropdownButton.AbsolutePosition.Y and 
+                        mousePos.Y <= DropdownButton.AbsolutePosition.Y + DropdownButton.AbsoluteSize.Y
+                    )
+
+                    local inList = (
+                        mousePos.X >= DropdownList.AbsolutePosition.X and 
+                        mousePos.X <= DropdownList.AbsolutePosition.X + DropdownList.AbsoluteSize.X and
+                        mousePos.Y >= DropdownList.AbsolutePosition.Y and 
+                        mousePos.Y <= DropdownList.AbsolutePosition.Y + DropdownList.AbsoluteSize.Y
+                    )
+
+                    if not inButton and not inList and not isAnimating then
+                        ToggleDropdown()
+                    end
+                end)
+
+                DropdownContainer.AncestryChanged:Connect(function(_, parent)
+                    if not parent and globalClickConnection then
+                        globalClickConnection:Disconnect()
+                    end
+                end)
+
+                -- Register for configuration
+                local elementId = tabName .. "_" .. sectionName .. "_" .. dropdownText
+                RegisterConfigElement(elementId, "MultiDropdown", tabName, sectionName,
+                    function() 
+                        local selectedList = {}
+                        for option, selected in pairs(selectedOptions) do
+                            if selected then
+                                table.insert(selectedList, option)
+                            end
+                        end
+                        return selectedList
+                    end,
+                    function(value)
+                        selectedOptions = {}
+                        for _, option in ipairs(value) do
+                            if table.find(options, option) then
+                                selectedOptions[option] = true
+                            end
+                        end
+                        
+                        -- Update checkmarks
+                        for option, checkmark in pairs(OptionCheckmarks) do
+                            if checkmark then
+                                checkmark.Visible = selectedOptions[option] or false
+                            end
+                        end
+                        
+                        UpdateSelectedText()
+                        callback(value)
+                    end
+                )
+
+                function DropdownFunctions:SetValue(value)
+                    selectedOptions = {}
+                    for _, option in ipairs(value) do
+                        if table.find(options, option) then
+                            selectedOptions[option] = true
+                        end
+                    end
+                    
+                    -- Update checkmarks
+                    for option, checkmark in pairs(OptionCheckmarks) do
+                        if checkmark then
+                            checkmark.Visible = selectedOptions[option] or false
+                        end
+                    end
+                    
+                    UpdateSelectedText()
+                    
+                    -- Get current selected options
+                    local currentSelected = {}
+                    for opt, selected in pairs(selectedOptions) do
+                        if selected then
+                            table.insert(currentSelected, opt)
+                        end
+                    end
+                    callback(currentSelected)
+                end
+
+                function DropdownFunctions:GetValue()
+                    local selectedList = {}
+                    for option, selected in pairs(selectedOptions) do
+                        if selected then
+                            table.insert(selectedList, option)
+                        end
+                    end
+                    return selectedList
+                end
+
+                function DropdownFunctions:Refresh(newOptions, newDefault)
+                    options = newOptions or options
+                    newDefault = newDefault or {}
+
+                    for _, button in ipairs(OptionButtons) do
+                        button:Destroy()
+                    end
+
+                    OptionButtons = {}
+                    OptionCheckmarks = {}
+                    selectedOptions = {}
+
+                    -- Initialize with new default options
+                    for _, option in ipairs(newDefault) do
+                        if table.find(options, option) then
+                            selectedOptions[option] = true
+                        end
+                    end
+
+                    for i, option in ipairs(options) do
+                        table.insert(OptionButtons, CreateOptionButton(option, i))
+                    end
+
+                    UpdateSelectedText()
+                    DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
+
+                    if isOpen then
+                        local optionsHeight = math.min(#options * 28 + 8, 140)
+                        DropdownList.Size = UDim2.new(1, 0, 0, optionsHeight)
+                        DropdownContainer.Size = UDim2.new(1, 0, 0, 40 + optionsHeight)
                     end
                 end
 
