@@ -1,4 +1,4 @@
---[file name]:nil
+--[file name]:DeltaLib.lua
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -1748,7 +1748,7 @@ function DeltaLib:CreateWindow(title, size)
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.Parent = SectionContainer
 
-            -- Section Content with Scrolling
+            -- Section Content with Scrolling - FIXED: Set ClipsDescendants to false
             local SectionScrollFrame = Instance.new("ScrollingFrame")
             SectionScrollFrame.Name = "SectionScrollFrame"
             SectionScrollFrame.Size = UDim2.new(1, -16, 0, 80) -- Initial height, will be adjusted
@@ -1761,6 +1761,7 @@ function DeltaLib:CreateWindow(title, size)
             SectionScrollFrame.ScrollingEnabled = true
             SectionScrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
             SectionScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
+            SectionScrollFrame.ClipsDescendants = false -- FIX: Allow dropdown to overflow
             SectionScrollFrame.Parent = SectionContainer
 
             local SectionContent = Instance.new("Frame")
@@ -2134,14 +2135,18 @@ function DeltaLib:CreateWindow(title, size)
                 return SliderFunctions
             end
 
+            -- Improved Dropdown Creation Function
             function Section:AddDropdown(dropdownText, options, default, callback)
                 local DropdownFunctions = {}
                 options = options or {}
                 default = default or options[1] or ""
                 callback = callback or function() end
 
+                -- Create a unique ID for this dropdown
+                local dropdownId = "Dropdown_" .. tostring(math.random(1, 10000))
+                
                 local DropdownContainer = Instance.new("Frame")
-                DropdownContainer.Name = "DropdownContainer"
+                DropdownContainer.Name = dropdownId
                 DropdownContainer.Size = UDim2.new(1, 0, 0, 40)
                 DropdownContainer.BackgroundTransparency = 1
                 DropdownContainer.Parent = SectionContent
@@ -2164,6 +2169,7 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownButton.BackgroundColor3 = Colors.DarkBackground
                 DropdownButton.BorderSizePixel = 0
                 DropdownButton.Text = ""
+                DropdownButton.ZIndex = 10
                 DropdownButton.Parent = DropdownContainer
 
                 local DropdownButtonCorner = Instance.new("UICorner")
@@ -2189,6 +2195,7 @@ function DeltaLib:CreateWindow(title, size)
                 SelectedTextBox.TextXAlignment = Enum.TextXAlignment.Left
                 SelectedTextBox.ClearTextOnFocus = false
                 SelectedTextBox.TextEditable = false
+                SelectedTextBox.ZIndex = 11
                 SelectedTextBox.Parent = DropdownButton
 
                 local DropdownArrow = Instance.new("ImageLabel")
@@ -2199,18 +2206,19 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownArrow.Image = "rbxassetid://6031094670"
                 DropdownArrow.ImageColor3 = Colors.NeonRed
                 DropdownArrow.Rotation = 270
+                DropdownArrow.ZIndex = 11
                 DropdownArrow.Parent = DropdownButton
 
+                -- Create dropdown list outside of the scrolling frame
                 local DropdownList = Instance.new("Frame")
                 DropdownList.Name = "DropdownList"
                 DropdownList.Size = UDim2.new(1, 0, 0, 0)
-                DropdownList.Position = UDim2.new(0, 0, 0, 45)
                 DropdownList.BackgroundColor3 = Colors.DarkBackground
                 DropdownList.BorderSizePixel = 0
                 DropdownList.Visible = false
-                DropdownList.ZIndex = 999999
-                DropdownList.ClipsDescendants = false
-                DropdownList.Parent = DropdownContainer
+                DropdownList.ZIndex = 1000 -- High z-index to appear above everything
+                DropdownList.ClipsDescendants = false -- Allow it to overflow
+                DropdownList.Parent = MainFrame -- Parent to main frame instead of container
 
                 local DropdownListCorner = Instance.new("UICorner")
                 DropdownListCorner.CornerRadius = UDim.new(0, 3)
@@ -2232,7 +2240,7 @@ function DeltaLib:CreateWindow(title, size)
                 DropdownScrollFrame.ScrollBarImageColor3 = Colors.NeonRed
                 DropdownScrollFrame.BottomImage = ""
                 DropdownScrollFrame.TopImage = ""
-                DropdownScrollFrame.ZIndex = 1000000
+                DropdownScrollFrame.ZIndex = 1001
                 DropdownScrollFrame.Parent = DropdownList
 
                 local DropdownOptionsLayout = Instance.new("UIListLayout")
@@ -2250,6 +2258,18 @@ function DeltaLib:CreateWindow(title, size)
                 local isOpen = false
                 local isAnimating = false
 
+                -- Function to update dropdown position
+                local function UpdateDropdownPosition()
+                    if not DropdownButton then return end
+                    
+                    local buttonPosition = DropdownButton.AbsolutePosition
+                    local buttonSize = DropdownButton.AbsoluteSize
+                    
+                    -- Position dropdown below the button
+                    DropdownList.Position = UDim2.new(0, buttonPosition.X, 0, buttonPosition.Y + buttonSize.Y)
+                    DropdownList.Size = UDim2.new(0, buttonSize.X, 0, DropdownList.AbsoluteSize.Y)
+                end
+
                 local function ToggleDropdown()
                     if isAnimating then return end
                     isAnimating = true
@@ -2259,20 +2279,18 @@ function DeltaLib:CreateWindow(title, size)
                     TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {Color = isOpen and Colors.NeonRed or Colors.DarkBorder}):Play()
 
                     if isOpen then
+                        UpdateDropdownPosition()
                         DropdownList.Visible = true
-                        DropdownList.ZIndex = 999999
-
+                        
                         local optionsHeight = math.min(#options * 28 + 8, 140)
-
-                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
-                        TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
-
+                        DropdownList.Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, 0)
+                        
+                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, optionsHeight)}):Play()
                         DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
 
                         task.delay(0.3, function() isAnimating = false end)
                     else
-                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 0)}):Play()
-                        TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+                        TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, 0)}):Play()
 
                         task.delay(0.3, function()
                             DropdownList.Visible = false
@@ -2291,7 +2309,7 @@ function DeltaLib:CreateWindow(title, size)
                     OptionButton.BorderSizePixel = 0
                     OptionButton.Text = ""
                     OptionButton.LayoutOrder = index
-                    OptionButton.ZIndex = 1000001
+                    OptionButton.ZIndex = 1002
                     OptionButton.Parent = DropdownScrollFrame
 
                     local OptionButtonCorner = Instance.new("UICorner")
@@ -2314,7 +2332,7 @@ function DeltaLib:CreateWindow(title, size)
                     OptionText.TextSize = 13
                     OptionText.Font = Enum.Font.Gotham
                     OptionText.TextXAlignment = Enum.TextXAlignment.Left
-                    OptionText.ZIndex = 1000002
+                    OptionText.ZIndex = 1003
                     OptionText.Parent = OptionButton
 
                     OptionButton.MouseButton1Down:Connect(function()
@@ -2375,9 +2393,13 @@ function DeltaLib:CreateWindow(title, size)
                     end
                 end)
 
+                -- Clean up when destroyed
                 DropdownContainer.AncestryChanged:Connect(function(_, parent)
-                    if not parent and globalClickConnection then
-                        globalClickConnection:Disconnect()
+                    if not parent then
+                        if globalClickConnection then
+                            globalClickConnection:Disconnect()
+                        end
+                        SafeDestroy(DropdownList)
                     end
                 end)
 
@@ -2423,8 +2445,7 @@ function DeltaLib:CreateWindow(title, size)
 
                     if isOpen then
                         local optionsHeight = math.min(#options * 28 + 8, 140)
-                        DropdownList.Size = UDim2.new(1, 0, 0, optionsHeight)
-                        DropdownContainer.Size = UDim2.new(1, 0, 0, 40 + optionsHeight)
+                        DropdownList.Size = UDim2.new(0, DropdownButton.AbsoluteSize.X, 0, optionsHeight)
                     end
                 end
 
