@@ -12,7 +12,7 @@ local HttpService = cloneref(game:GetService("HttpService"))
 
 -- Configuration System
 local ConfigSystem = {}
-ConfigSystem.Version = "1.4" -- Updated version
+ConfigSystem.Version = "1.4.1" -- Updated version
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
 ConfigSystem.AutoSaveInterval = 0.1 -- seconds
@@ -2427,13 +2427,12 @@ function DeltaLib:CreateWindow(title, size)
                 return DropdownFunctions
             end
 
-            -- MULTI-SELECT DROPDOWN (NEW FEATURE)
-            function Section:AddMultiDropdown(dropdownText, options, default, callback, multiChoose)
+            -- MULTI-SELECT DROPDOWN (NO BOOLEAN PARAMETER)
+            function Section:AddMultiDropdown(dropdownText, options, default, callback)
                 local DropdownFunctions = {}
                 options = options or {}
                 default = default or {}
                 callback = callback or function() end
-                multiChoose = multiChoose == nil and true or multiChoose
 
                 local DropdownContainer = Instance.new("Frame")
                 DropdownContainer.Name = "MultiDropdownContainer"
@@ -2676,21 +2675,9 @@ function DeltaLib:CreateWindow(title, size)
                     OptionButton.MouseButton1Down:Connect(function()
                         if isAnimating then return end
                         
-                        if multiChoose then
-                            -- Toggle selection for multi-select
-                            selectedOptions[option] = not selectedOptions[option]
-                            Checkmark.Visible = selectedOptions[option]
-                        else
-                            -- Single select behavior
-                            for opt, _ in pairs(selectedOptions) do
-                                selectedOptions[opt] = false
-                                if OptionCheckmarks[opt] then
-                                    OptionCheckmarks[opt].Visible = false
-                                end
-                            end
-                            selectedOptions[option] = true
-                            Checkmark.Visible = true
-                        end
+                        -- Toggle selection for multi-select (always multi-select now)
+                        selectedOptions[option] = not selectedOptions[option]
+                        Checkmark.Visible = selectedOptions[option]
                         
                         UpdateSelectedText()
                         task.spawn(function()
