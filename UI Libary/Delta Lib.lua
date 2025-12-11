@@ -639,7 +639,7 @@ function DeltaLib:CreateWindow(title, size)
     -- Configuration Management
     local Configurations = {}
     local ConfigCallbacks = {}
-    local CurrentConfig = "default"
+    local CurrentConfig = {}
     local ConfigSettings = {
         AutoLoadConfig = false,
         LastLoadedConfig = ""
