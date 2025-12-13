@@ -1,4 +1,4 @@
---[file name]:nil
+-- DeltaLib.lua - Fixed Version
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -12,11 +12,11 @@ local HttpService = cloneref(game:GetService("HttpService"))
 
 -- Configuration System
 local ConfigSystem = {}
-ConfigSystem.Version = "1.4.1" -- Updated version
+ConfigSystem.Version = "1.4.1"
 ConfigSystem.FolderName = "DeltaLib_Configs"
 ConfigSystem.AutoSave = true
-ConfigSystem.AutoSaveInterval = 0.1 -- seconds
-ConfigSystem.AutoLoad = false -- New: Auto-load config on startup
+ConfigSystem.AutoSaveInterval = 0.1
+ConfigSystem.AutoLoad = false
 
 -- Track open config managers to prevent spam
 local OpenConfigManagers = {}
@@ -24,13 +24,10 @@ local OpenConfigManagers = {}
 -- Get config path based on environment
 local function GetConfigPath()
     if writefile and readfile then
-        -- Synapse/Other exploits with file system access
         return ConfigSystem.FolderName
     elseif isfolder and makefolder and readfile and writefile then
-        -- KRNL-like file system
         return ConfigSystem.FolderName
     else
-        -- No file system access, use DataStores or just memory
         return nil
     end
 end
@@ -71,9 +68,13 @@ end
 
 local function SafeConnect(signal, callback)
     if not signal then return nil end
-    return pcall(function()
+    local success, connection = pcall(function()
         return signal:Connect(callback)
     end)
+    if success then
+        return connection
+    end
+    return nil
 end
 
 -- Debounce function to prevent spamming
@@ -89,7 +90,7 @@ local function CreateDebounce(delay)
     end
 end
 
--- Colors - Updated with darker edges
+-- Colors
 local Colors = {
     Background = Color3.fromRGB(25, 25, 25),
     DarkBackground = Color3.fromRGB(15, 15, 15),
@@ -99,15 +100,15 @@ local Colors = {
     LightNeonRed = Color3.fromRGB(255, 50, 90),
     Text = Color3.fromRGB(255, 255, 255),
     SubText = Color3.fromRGB(200, 200, 200),
-    Border = Color3.fromRGB(35, 35, 35), -- Darker border
-    DarkBorder = Color3.fromRGB(20, 20, 20), -- Even darker for edges
+    Border = Color3.fromRGB(35, 35, 35),
+    DarkBorder = Color3.fromRGB(20, 20, 20),
     Success = Color3.fromRGB(0, 200, 83),
     Warning = Color3.fromRGB(255, 149, 0),
     Error = Color3.fromRGB(255, 59, 48),
     PanelBackground = Color3.fromRGB(28, 28, 28)
 }
 
--- Improved Draggable Function with Delta Movement and Error Handling
+-- Improved Draggable Function
 local function MakeDraggable(frame, dragArea)
     if not frame or not dragArea then return end
 
@@ -130,7 +131,6 @@ local function MakeDraggable(frame, dragArea)
             dragStart = input.Position
             startPos = frame.Position
 
-            -- Track when input ends
             SafeConnect(input.Changed, function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragToggle = false
@@ -161,7 +161,7 @@ local function GetPlayerAvatar(userId, size)
 
     if not success then
         warn("Failed to get avatar: " .. tostring(result))
-        return "rbxassetid://7784647711" -- Default avatar fallback
+        return "rbxassetid://7784647711"
     end
 
     return result
@@ -170,7 +170,7 @@ end
 -- Create UI Elements
 function DeltaLib:CreateWindow(title, size)
     local Window = {}
-    size = size or UDim2.new(0, 400, 0, 300) -- Smaller default size
+    size = size or UDim2.new(0, 400, 0, 300)
 
     -- Main GUI
     local DeltaLibGUI = Instance.new("ScreenGui")
@@ -178,7 +178,6 @@ function DeltaLib:CreateWindow(title, size)
     DeltaLibGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     DeltaLibGUI.ResetOnSpawn = false
 
-    -- Try to parent to CoreGui if possible (for exploits)
     pcall(function()
         if syn and syn.protect_gui then
             syn.protect_gui(DeltaLibGUI)
@@ -206,18 +205,16 @@ function DeltaLib:CreateWindow(title, size)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = DeltaLibGUI
 
-    -- Add rounded corners
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 4) -- Smaller corner radius
+    UICorner.CornerRadius = UDim.new(0, 4)
     UICorner.Parent = MainFrame
 
-    -- Add shadow
     local Shadow = Instance.new("ImageLabel")
     Shadow.Name = "Shadow"
     Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
     Shadow.BackgroundTransparency = 1
     Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    Shadow.Size = UDim2.new(1, 25, 1, 25) -- Smaller shadow
+    Shadow.Size = UDim2.new(1, 25, 1, 25)
     Shadow.ZIndex = -1
     Shadow.Image = "rbxassetid://5554236805"
     Shadow.ImageColor3 = Colors.NeonRed
@@ -226,7 +223,6 @@ function DeltaLib:CreateWindow(title, size)
     Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
     Shadow.Parent = MainFrame
 
-    -- Add border for main frame
     local MainFrameStroke = Instance.new("UIStroke")
     MainFrameStroke.Color = Colors.DarkBorder
     MainFrameStroke.Thickness = 1
@@ -235,13 +231,13 @@ function DeltaLib:CreateWindow(title, size)
     -- Title Bar
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
-    TitleBar.Size = UDim2.new(1, 0, 0, 25) -- Smaller title bar
+    TitleBar.Size = UDim2.new(1, 0, 0, 25)
     TitleBar.BackgroundColor3 = Colors.DarkBackground
     TitleBar.BorderSizePixel = 0
     TitleBar.Parent = MainFrame
 
     local TitleBarCorner = Instance.new("UICorner")
-    TitleBarCorner.CornerRadius = UDim.new(0, 4) -- Smaller corner radius
+    TitleBarCorner.CornerRadius = UDim.new(0, 4)
     TitleBarCorner.Parent = TitleBar
 
     local TitleBarCover = Instance.new("Frame")
@@ -252,7 +248,6 @@ function DeltaLib:CreateWindow(title, size)
     TitleBarCover.BorderSizePixel = 0
     TitleBarCover.Parent = TitleBar
 
-    -- Add border to title bar
     local TitleBarStroke = Instance.new("UIStroke")
     TitleBarStroke.Color = Colors.DarkBorder
     TitleBarStroke.Thickness = 1
@@ -261,7 +256,7 @@ function DeltaLib:CreateWindow(title, size)
     -- User Avatar
     local AvatarContainer = Instance.new("Frame")
     AvatarContainer.Name = "AvatarContainer"
-    AvatarContainer.Size = UDim2.new(0, 18, 0, 18) -- Smaller avatar
+    AvatarContainer.Size = UDim2.new(0, 18, 0, 18)
     AvatarContainer.Position = UDim2.new(0, 4, 0, 3)
     AvatarContainer.BackgroundColor3 = Colors.NeonRed
     AvatarContainer.BorderSizePixel = 0
@@ -277,7 +272,6 @@ function DeltaLib:CreateWindow(title, size)
     AvatarImage.Position = UDim2.new(0, 1, 0, 1)
     AvatarImage.BackgroundTransparency = 1
 
-    -- Use pcall for getting avatar
     pcall(function()
         AvatarImage.Image = GetPlayerAvatar(Player.UserId, "100x100")
     end)
@@ -296,7 +290,7 @@ function DeltaLib:CreateWindow(title, size)
     UsernameLabel.BackgroundTransparency = 1
     UsernameLabel.Text = Player.Name
     UsernameLabel.TextColor3 = Colors.Text
-    UsernameLabel.TextSize = 12 -- Smaller text size
+    UsernameLabel.TextSize = 12
     UsernameLabel.Font = Enum.Font.GothamSemibold
     UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
     UsernameLabel.Parent = TitleBar
@@ -309,7 +303,7 @@ function DeltaLib:CreateWindow(title, size)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Text = title or "Delta UI"
     TitleLabel.TextColor3 = Colors.NeonRed
-    TitleLabel.TextSize = 12 -- Smaller text size
+    TitleLabel.TextSize = 12
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
     TitleLabel.Parent = TitleBar
@@ -317,12 +311,12 @@ function DeltaLib:CreateWindow(title, size)
     -- Minimize Button
     local MinimizeButton = Instance.new("TextButton")
     MinimizeButton.Name = "MinimizeButton"
-    MinimizeButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
-    MinimizeButton.Position = UDim2.new(1, -45, 0, 2) -- Position it to the left of the close button
+    MinimizeButton.Size = UDim2.new(0, 20, 0, 20)
+    MinimizeButton.Position = UDim2.new(1, -45, 0, 2)
     MinimizeButton.BackgroundTransparency = 1
-    MinimizeButton.Text = "-" -- Minus symbol
+    MinimizeButton.Text = "-"
     MinimizeButton.TextColor3 = Colors.Text
-    MinimizeButton.TextSize = 14 -- Smaller text size
+    MinimizeButton.TextSize = 14
     MinimizeButton.Font = Enum.Font.GothamBold
     MinimizeButton.Parent = TitleBar
 
@@ -337,16 +331,15 @@ function DeltaLib:CreateWindow(title, size)
     -- Config Button
     local ConfigButton = Instance.new("TextButton")
     ConfigButton.Name = "ConfigButton"
-    ConfigButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
-    ConfigButton.Position = UDim2.new(1, -68, 0, 2) -- Position it to the left of minimize button
+    ConfigButton.Size = UDim2.new(0, 20, 0, 20)
+    ConfigButton.Position = UDim2.new(1, -68, 0, 2)
     ConfigButton.BackgroundTransparency = 1
-    ConfigButton.Text = "⚙" -- Gear symbol
+    ConfigButton.Text = "⚙"
     ConfigButton.TextColor3 = Colors.Text
-    ConfigButton.TextSize = 14 -- Smaller text size
+    ConfigButton.TextSize = 14
     ConfigButton.Font = Enum.Font.GothamBold
     ConfigButton.Parent = TitleBar
 
-    -- Debounce for config button
     local configButtonDebounce = CreateDebounce(0.5)
 
     SafeConnect(ConfigButton.MouseEnter, function()
@@ -360,12 +353,12 @@ function DeltaLib:CreateWindow(title, size)
     -- Close Button
     local CloseButton = Instance.new("TextButton")
     CloseButton.Name = "CloseButton"
-    CloseButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
+    CloseButton.Size = UDim2.new(0, 20, 0, 20)
     CloseButton.Position = UDim2.new(1, -22, 0, 2)
     CloseButton.BackgroundTransparency = 1
     CloseButton.Text = "X"
     CloseButton.TextColor3 = Colors.Text
-    CloseButton.TextSize = 14 -- Smaller text size
+    CloseButton.TextSize = 14
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.Parent = TitleBar
 
@@ -381,19 +374,17 @@ function DeltaLib:CreateWindow(title, size)
         SafeDestroy(DeltaLibGUI)
     end)
 
-    -- Make window draggable with improved function
     MakeDraggable(MainFrame, TitleBar)
 
-    -- Container for tabs with horizontal scrolling
+    -- Tab Container
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
-    TabContainer.Size = UDim2.new(1, 0, 0, 25) -- Smaller tab container
+    TabContainer.Size = UDim2.new(1, 0, 0, 25)
     TabContainer.Position = UDim2.new(0, 0, 0, 25)
     TabContainer.BackgroundColor3 = Colors.LightBackground
     TabContainer.BorderSizePixel = 0
     TabContainer.Parent = MainFrame
 
-    -- Add border to tab container
     local TabContainerStroke = Instance.new("UIStroke")
     TabContainerStroke.Color = Colors.DarkBorder
     TabContainerStroke.Thickness = 1
@@ -402,13 +393,13 @@ function DeltaLib:CreateWindow(title, size)
     -- Left Scroll Button
     local LeftScrollButton = Instance.new("TextButton")
     LeftScrollButton.Name = "LeftScrollButton"
-    LeftScrollButton.Size = UDim2.new(0, 20, 0, 25) -- Smaller button
+    LeftScrollButton.Size = UDim2.new(0, 20, 0, 25)
     LeftScrollButton.Position = UDim2.new(0, 0, 0, 0)
     LeftScrollButton.BackgroundColor3 = Colors.DarkBackground
     LeftScrollButton.BorderSizePixel = 0
     LeftScrollButton.Text = "<"
     LeftScrollButton.TextColor3 = Colors.Text
-    LeftScrollButton.TextSize = 14 -- Smaller text size
+    LeftScrollButton.TextSize = 14
     LeftScrollButton.Font = Enum.Font.GothamBold
     LeftScrollButton.ZIndex = 3
     LeftScrollButton.Parent = TabContainer
@@ -420,13 +411,13 @@ function DeltaLib:CreateWindow(title, size)
     -- Right Scroll Button
     local RightScrollButton = Instance.new("TextButton")
     RightScrollButton.Name = "RightScrollButton"
-    RightScrollButton.Size = UDim2.new(0, 20, 0, 25) -- Smaller button
+    RightScrollButton.Size = UDim2.new(0, 20, 0, 25)
     RightScrollButton.Position = UDim2.new(1, -20, 0, 0)
     RightScrollButton.BackgroundColor3 = Colors.DarkBackground
     RightScrollButton.BorderSizePixel = 0
     RightScrollButton.Text = ">"
     RightScrollButton.TextColor3 = Colors.Text
-    RightScrollButton.TextSize = 14 -- Smaller text size
+    RightScrollButton.TextSize = 14
     RightScrollButton.Font = Enum.Font.GothamBold
     RightScrollButton.ZIndex = 3
     RightScrollButton.Parent = TabContainer
@@ -438,13 +429,13 @@ function DeltaLib:CreateWindow(title, size)
     -- Tab Scroll Frame
     local TabScrollFrame = Instance.new("ScrollingFrame")
     TabScrollFrame.Name = "TabScrollFrame"
-    TabScrollFrame.Size = UDim2.new(1, -40, 1, 0) -- Leave space for scroll buttons
-    TabScrollFrame.Position = UDim2.new(0, 20, 0, 0) -- Center between scroll buttons
+    TabScrollFrame.Size = UDim2.new(1, -40, 1, 0)
+    TabScrollFrame.Position = UDim2.new(0, 20, 0, 0)
     TabScrollFrame.BackgroundTransparency = 1
     TabScrollFrame.BorderSizePixel = 0
-    TabScrollFrame.ScrollBarThickness = 0 -- Hide scrollbar
+    TabScrollFrame.ScrollBarThickness = 0
     TabScrollFrame.ScrollingDirection = Enum.ScrollingDirection.X
-    TabScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
+    TabScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     TabScrollFrame.Parent = TabContainer
 
     -- Tab Buttons Container
@@ -458,16 +449,14 @@ function DeltaLib:CreateWindow(title, size)
     TabButtonsLayout.FillDirection = Enum.FillDirection.Horizontal
     TabButtonsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
     TabButtonsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabButtonsLayout.Padding = UDim.new(0, 4) -- Smaller padding
+    TabButtonsLayout.Padding = UDim.new(0, 4)
     TabButtonsLayout.Parent = TabButtons
 
-    -- Add padding to the first tab
     local TabButtonsPadding = Instance.new("UIPadding")
-    TabButtonsPadding.PaddingLeft = UDim.new(0, 4) -- Smaller padding
-    TabButtonsPadding.PaddingRight = UDim.new(0, 4) -- Smaller padding
+    TabButtonsPadding.PaddingLeft = UDim.new(0, 4)
+    TabButtonsPadding.PaddingRight = UDim.new(0, 4)
     TabButtonsPadding.Parent = TabButtons
 
-    -- Update tab scroll canvas size when tabs change
     SafeConnect(TabButtonsLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
         pcall(function()
             TabScrollFrame.CanvasSize = UDim2.new(0, TabButtonsLayout.AbsoluteContentSize.X, 0, 0)
@@ -475,10 +464,9 @@ function DeltaLib:CreateWindow(title, size)
     end)
 
     -- Scroll buttons functionality
-    local scrollAmount = 100 -- Smaller scroll amount
-    local scrollDuration = 0.3 -- Duration of scroll animation
+    local scrollAmount = 100
+    local scrollDuration = 0.3
 
-    -- Function to scroll with animation
     local function ScrollTabs(direction)
         pcall(function()
             local currentPos = TabScrollFrame.CanvasPosition.X
@@ -491,14 +479,12 @@ function DeltaLib:CreateWindow(title, size)
                 targetPos = math.min(currentPos + scrollAmount, maxScroll)
             end
 
-            -- Create a smooth scrolling animation
             local tweenInfo = TweenInfo.new(scrollDuration, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
             local tween = TweenService:Create(TabScrollFrame, tweenInfo, {CanvasPosition = Vector2.new(targetPos, 0)})
             tween:Play()
         end)
     end
 
-    -- Button hover effects
     SafeConnect(LeftScrollButton.MouseEnter, function()
         TweenService:Create(LeftScrollButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.NeonRed}):Play()
     end)
@@ -515,7 +501,6 @@ function DeltaLib:CreateWindow(title, size)
         TweenService:Create(RightScrollButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.DarkBackground}):Play()
     end)
 
-    -- Connect scroll buttons
     SafeConnect(LeftScrollButton.MouseButton1Click, function()
         ScrollTabs("left")
     end)
@@ -524,24 +509,18 @@ function DeltaLib:CreateWindow(title, size)
         ScrollTabs("right")
     end)
 
-    -- Add continuous scrolling when holding the button
     local isScrollingLeft = false
     local isScrollingRight = false
 
     SafeConnect(LeftScrollButton.MouseButton1Down, function()
         isScrollingLeft = true
-
-        -- Initial scroll
         ScrollTabs("left")
-
-        -- Continue scrolling while button is held
         spawn(function()
-            local initialDelay = 0.5 -- Wait before starting continuous scroll
+            local initialDelay = 0.5
             wait(initialDelay)
-
             while isScrollingLeft do
                 ScrollTabs("left")
-                wait(0.2) -- Scroll interval
+                wait(0.2)
             end
         end)
     end)
@@ -556,18 +535,13 @@ function DeltaLib:CreateWindow(title, size)
 
     SafeConnect(RightScrollButton.MouseButton1Down, function()
         isScrollingRight = true
-
-        -- Initial scroll
         ScrollTabs("right")
-
-        -- Continue scrolling while button is held
         spawn(function()
-            local initialDelay = 0.5 -- Wait before starting continuous scroll
+            local initialDelay = 0.5
             wait(initialDelay)
-
             while isScrollingRight do
                 ScrollTabs("right")
-                wait(0.2) -- Scroll interval
+                wait(0.2)
             end
         end)
     end)
@@ -583,51 +557,38 @@ function DeltaLib:CreateWindow(title, size)
     -- Content Container
     local ContentContainer = Instance.new("Frame")
     ContentContainer.Name = "ContentContainer"
-    ContentContainer.Size = UDim2.new(1, 0, 1, -50) -- Smaller content container
+    ContentContainer.Size = UDim2.new(1, 0, 1, -50)
     ContentContainer.Position = UDim2.new(0, 0, 0, 50)
     ContentContainer.BackgroundTransparency = 1
     ContentContainer.Parent = MainFrame
 
-    -- Track minimized state
+    -- Minimized state
     local isMinimized = false
     local originalSize = size
 
-    -- Minimize/Restore function
     SafeConnect(MinimizeButton.MouseButton1Click, function()
         isMinimized = not isMinimized
 
         if isMinimized then
-            -- Save current size before minimizing if it's been resized
             originalSize = MainFrame.Size
-
-            -- Minimize animation
             pcall(function()
                 TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, 25)
                 }):Play()
             end)
-
-            -- Hide content
             ContentContainer.Visible = false
             TabContainer.Visible = false
-
-            -- Change minimize button to restore symbol
             MinimizeButton.Text = "+"
         else
-            -- Restore animation
             pcall(function()
                 TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                     Size = originalSize
                 }):Play()
             end)
-
-            -- Show content (with slight delay to match animation)
             task.delay(0.1, function()
                 ContentContainer.Visible = true
                 TabContainer.Visible = true
             end)
-
-            -- Change restore button back to minimize symbol
             MinimizeButton.Text = "-"
         end
     end)
@@ -636,7 +597,7 @@ function DeltaLib:CreateWindow(title, size)
     local Tabs = {}
     local SelectedTab = nil
 
-    -- Configuration Management
+    -- Configuration Management - FIXED
     local Configurations = {}
     local ConfigCallbacks = {}
     local CurrentConfig = "default"
@@ -664,7 +625,6 @@ function DeltaLib:CreateWindow(title, size)
             LastLoadedConfig = ConfigSettings.LastLoadedConfig
         }
         
-        -- Convert to JSON
         local jsonData
         pcall(function()
             jsonData = HttpService:JSONEncode(settingsData)
@@ -674,7 +634,6 @@ function DeltaLib:CreateWindow(title, size)
             return false
         end
         
-        -- Save to file
         local success, result = pcall(function()
             local fileName = "config_settings.json"
             local filePath = ConfigPath .. "/" .. fileName
@@ -698,7 +657,6 @@ function DeltaLib:CreateWindow(title, size)
             return false
         end
         
-        -- Read from file
         local jsonData
         local success, result = pcall(function()
             jsonData = readfile(filePath)
@@ -709,7 +667,6 @@ function DeltaLib:CreateWindow(title, size)
             return false
         end
         
-        -- Parse JSON
         local settingsData
         pcall(function()
             settingsData = HttpService:JSONDecode(jsonData)
@@ -719,19 +676,18 @@ function DeltaLib:CreateWindow(title, size)
             return false
         end
         
-        -- Apply settings
         ConfigSettings.AutoLoadConfig = settingsData.AutoLoadConfig or false
         ConfigSettings.LastLoadedConfig = settingsData.LastLoadedConfig or ""
         
         return true
     end
 
-    -- Function to save configuration
+    -- Function to save configuration - FIXED
     local function SaveConfiguration(configName)
         configName = configName or CurrentConfig
         
         if not IsFileSystemAvailable() then
-            return false
+            return false, "File system not available"
         end
         
         local configData = {
@@ -741,9 +697,9 @@ function DeltaLib:CreateWindow(title, size)
             Settings = {}
         }
         
-        -- Collect all settings
+        -- Collect all settings safely
         for elementId, callbackInfo in pairs(ConfigCallbacks) do
-            if callbackInfo.GetValue then
+            if callbackInfo and callbackInfo.GetValue then
                 local value = SafeCall(callbackInfo.GetValue)
                 if value ~= nil then
                     configData.Settings[elementId] = {
@@ -758,16 +714,16 @@ function DeltaLib:CreateWindow(title, size)
         
         -- Convert to JSON
         local jsonData
-        pcall(function()
+        local encodeSuccess, encodeError = pcall(function()
             jsonData = HttpService:JSONEncode(configData)
         end)
         
-        if not jsonData then
-            return false
+        if not encodeSuccess or not jsonData then
+            return false, "Failed to encode JSON: " .. tostring(encodeError)
         end
         
         -- Save to file
-        local success, result = pcall(function()
+        local success, writeError = pcall(function()
             local fileName = GetConfigFileName(configName)
             local filePath = ConfigPath .. "/" .. fileName
             writefile(filePath, jsonData)
@@ -775,53 +731,75 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if success then
-            return true
+            return true, "Configuration saved successfully"
         else
-            return false
+            return false, "Failed to write file: " .. tostring(writeError)
         end
     end
 
-    -- Function to load configuration
+    -- Function to load configuration - FIXED
     local function LoadConfiguration(configName)
         configName = configName or CurrentConfig
         
         if not IsFileSystemAvailable() then
-            return false
+            return false, "File system not available"
         end
         
         local fileName = GetConfigFileName(configName)
         local filePath = ConfigPath .. "/" .. fileName
         
-        if not isfile(filePath) then
-            return false
+        -- Check if file exists safely
+        local fileExists = false
+        pcall(function()
+            fileExists = isfile(filePath)
+        end)
+        
+        if not fileExists then
+            return false, "Config file does not exist: " .. fileName
         end
         
         -- Read from file
         local jsonData
-        local success, result = pcall(function()
+        local success, readError = pcall(function()
             jsonData = readfile(filePath)
             return true
         end)
         
         if not success or not jsonData then
-            return false
+            return false, "Failed to read file: " .. tostring(readError)
         end
         
         -- Parse JSON
         local configData
-        pcall(function()
+        local decodeSuccess, decodeError = pcall(function()
             configData = HttpService:JSONDecode(jsonData)
         end)
         
-        if not configData then
-            return false
+        if not decodeSuccess or not configData then
+            return false, "Failed to parse JSON: " .. tostring(decodeError)
         end
         
-        -- Apply settings
+        -- Apply settings with error handling
+        local appliedCount = 0
+        local errorCount = 0
+        local errors = {}
+        
         for elementId, setting in pairs(configData.Settings or {}) do
             local callbackInfo = ConfigCallbacks[elementId]
             if callbackInfo and callbackInfo.SetValue then
-                SafeCall(callbackInfo.SetValue, setting.Value)
+                local applySuccess, applyError = pcall(function()
+                    callbackInfo.SetValue(setting.Value)
+                end)
+                
+                if applySuccess then
+                    appliedCount = appliedCount + 1
+                else
+                    errorCount = errorCount + 1
+                    table.insert(errors, elementId .. ": " .. tostring(applyError))
+                end
+            else
+                errorCount = errorCount + 1
+                table.insert(errors, elementId .. ": Callback not found")
             end
         end
         
@@ -829,7 +807,12 @@ function DeltaLib:CreateWindow(title, size)
         ConfigSettings.LastLoadedConfig = configName
         SaveConfigSettings()
         
-        return true
+        local message = string.format("Loaded %d settings (failed: %d)", appliedCount, errorCount)
+        if #errors > 0 then
+            message = message .. "\nErrors: " .. table.concat(errors, ", ")
+        end
+        
+        return true, message
     end
 
     -- Function to delete configuration
@@ -853,7 +836,6 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if success then
-            -- If we deleted the current config, reset to default
             if CurrentConfig == configName then
                 CurrentConfig = "default"
             end
@@ -863,7 +845,7 @@ function DeltaLib:CreateWindow(title, size)
         end
     end
 
-    -- Function to list ALL available configurations (all .json files in folder)
+    -- Function to list ALL available configurations
     local function ListAllConfigurations()
         if not IsFileSystemAvailable() then
             return {}
@@ -876,7 +858,6 @@ function DeltaLib:CreateWindow(title, size)
                 local fileName = filePath:match("[^\\/]+$")
                 if fileName:match("%.json$") and fileName ~= "config_settings.json" then
                     local configName = fileName:gsub("%.json$", "")
-                    -- Extract the base name (remove window title prefix)
                     local baseName = configName:match("^.+_(.+)$") or configName
                     table.insert(allConfigs, {
                         FullName = configName,
@@ -928,25 +909,20 @@ function DeltaLib:CreateWindow(title, size)
 
     -- Function to show compact configuration manager
     local function ShowConfigManager()
-        -- Prevent spam with debounce
         if configButtonDebounce() then
             return
         end
         
-        -- Close any existing config manager for this window
         if OpenConfigManagers[DeltaLibGUI] then
             SafeDestroy(OpenConfigManagers[DeltaLibGUI])
         end
         
-        -- Get all available configurations
         local allConfigs = ListAllConfigurations()
         local windowConfigs = ListConfigurations()
         
-        -- Calculate dynamic height - Made more compact
-        local baseHeight = 350  -- Slightly taller for new toggle
+        local baseHeight = 350
         local configListHeight = 100
         
-        -- Create config manager window - Made more compact
         local ConfigWindow = Instance.new("Frame")
         ConfigWindow.Name = "ConfigManager"
         ConfigWindow.Size = UDim2.new(0, 300, 0, baseHeight)
@@ -956,14 +932,12 @@ function DeltaLib:CreateWindow(title, size)
         ConfigWindow.ZIndex = 100
         ConfigWindow.Parent = DeltaLibGUI
         
-        -- Store reference to prevent spam
         OpenConfigManagers[DeltaLibGUI] = ConfigWindow
 
         local ConfigCorner = Instance.new("UICorner")
         ConfigCorner.CornerRadius = UDim.new(0, 4)
         ConfigCorner.Parent = ConfigWindow
 
-        -- Add darker border
         local ConfigBorder = Instance.new("UIStroke")
         ConfigBorder.Color = Colors.DarkBorder
         ConfigBorder.Thickness = 2
@@ -980,7 +954,6 @@ function DeltaLib:CreateWindow(title, size)
         ConfigTitleBarCorner.CornerRadius = UDim.new(0, 3)
         ConfigTitleBarCorner.Parent = ConfigTitleBar
 
-        -- Add border to title bar
         local TitleBarBorder = Instance.new("UIStroke")
         TitleBarBorder.Color = Colors.DarkBorder
         TitleBarBorder.Thickness = 1
@@ -1059,7 +1032,6 @@ function DeltaLib:CreateWindow(title, size)
         CurrentConfigCorner.CornerRadius = UDim.new(0, 3)
         CurrentConfigCorner.Parent = CurrentConfigSection
 
-        -- Add border to section
         local SectionBorder = Instance.new("UIStroke")
         SectionBorder.Color = Colors.DarkBorder
         SectionBorder.Thickness = 1
@@ -1097,7 +1069,6 @@ function DeltaLib:CreateWindow(title, size)
         ConfigNameInputCorner.CornerRadius = UDim.new(0, 3)
         ConfigNameInputCorner.Parent = ConfigNameInput
 
-        -- Add border to input
         local InputBorder = Instance.new("UIStroke")
         InputBorder.Color = Colors.DarkBorder
         InputBorder.Thickness = 1
@@ -1107,7 +1078,7 @@ function DeltaLib:CreateWindow(title, size)
         ConfigNameInputPadding.PaddingLeft = UDim.new(0, 6)
         ConfigNameInputPadding.Parent = ConfigNameInput
 
-        -- Settings Section - NEW: Added Auto Load Toggle
+        -- Settings Section
         local SettingsSection = Instance.new("Frame")
         SettingsSection.Name = "SettingsSection"
         SettingsSection.Size = UDim2.new(1, 0, 0, 40)
@@ -1120,7 +1091,6 @@ function DeltaLib:CreateWindow(title, size)
         SettingsCorner.CornerRadius = UDim.new(0, 3)
         SettingsCorner.Parent = SettingsSection
 
-        -- Add border to settings section
         local SettingsBorder = Instance.new("UIStroke")
         SettingsBorder.Color = Colors.DarkBorder
         SettingsBorder.Thickness = 1
@@ -1139,7 +1109,6 @@ function DeltaLib:CreateWindow(title, size)
         AutoLoadToggleCorner.CornerRadius = UDim.new(0, 3)
         AutoLoadToggleCorner.Parent = AutoLoadToggle
 
-        -- Add border to toggle
         local ToggleBorder = Instance.new("UIStroke")
         ToggleBorder.Color = Colors.DarkBorder
         ToggleBorder.Thickness = 1
@@ -1184,7 +1153,6 @@ function DeltaLib:CreateWindow(title, size)
         AutoLoadToggleCircleCorner.CornerRadius = UDim.new(1, 0)
         AutoLoadToggleCircleCorner.Parent = AutoLoadToggleCircle
 
-        -- Update auto load toggle appearance
         local function UpdateAutoLoadToggle()
             if ConfigSettings.AutoLoadConfig then
                 TweenService:Create(AutoLoadToggleButton, TweenInfo.new(0.2), {BackgroundColor3 = Colors.NeonRed}):Play()
@@ -1195,10 +1163,8 @@ function DeltaLib:CreateWindow(title, size)
             end
         end
 
-        -- Set initial state
         UpdateAutoLoadToggle()
 
-        -- Auto load toggle logic
         SafeConnect(AutoLoadToggle.MouseButton1Click, function()
             ConfigSettings.AutoLoadConfig = not ConfigSettings.AutoLoadConfig
             UpdateAutoLoadToggle()
@@ -1218,7 +1184,6 @@ function DeltaLib:CreateWindow(title, size)
         ActionButtonsCorner.CornerRadius = UDim.new(0, 3)
         ActionButtonsCorner.Parent = ActionButtonsSection
 
-        -- Add border to section
         local ActionBorder = Instance.new("UIStroke")
         ActionBorder.Color = Colors.DarkBorder
         ActionBorder.Thickness = 1
@@ -1236,7 +1201,6 @@ function DeltaLib:CreateWindow(title, size)
         ActionButtonsLabel.TextXAlignment = Enum.TextXAlignment.Left
         ActionButtonsLabel.Parent = ActionButtonsSection
 
-        -- Save Button with debounce
         local saveDebounce = CreateDebounce(0.5)
         local SaveButton = Instance.new("TextButton")
         SaveButton.Name = "SaveButton"
@@ -1254,7 +1218,6 @@ function DeltaLib:CreateWindow(title, size)
         SaveButtonCorner.CornerRadius = UDim.new(0, 3)
         SaveButtonCorner.Parent = SaveButton
 
-        -- Add border to button
         local SaveButtonBorder = Instance.new("UIStroke")
         SaveButtonBorder.Color = Colors.DarkBorder
         SaveButtonBorder.Thickness = 1
@@ -1271,8 +1234,8 @@ function DeltaLib:CreateWindow(title, size)
             CurrentConfig = newName
             ConfigNameInput.Text = newName
             
-            if SaveConfiguration(newName) then
-                -- Show success feedback
+            local success, message = SaveConfiguration(newName)
+            if success then
                 SaveButton.Text = "✓ Saved!"
                 SaveButton.BackgroundColor3 = Colors.Success
                 
@@ -1281,10 +1244,8 @@ function DeltaLib:CreateWindow(title, size)
                 SaveButton.Text = "Save Configuration"
                 SaveButton.BackgroundColor3 = Colors.NeonRed
                 
-                -- Refresh config list
                 RefreshConfigList()
             else
-                -- Show error feedback
                 SaveButton.Text = "✗ Failed!"
                 SaveButton.BackgroundColor3 = Colors.Error
                 
@@ -1295,7 +1256,6 @@ function DeltaLib:CreateWindow(title, size)
             end
         end)
 
-        -- Load Button with debounce
         local loadDebounce = CreateDebounce(0.5)
         local LoadButton = Instance.new("TextButton")
         LoadButton.Name = "LoadButton"
@@ -1313,7 +1273,6 @@ function DeltaLib:CreateWindow(title, size)
         LoadButtonCorner.CornerRadius = UDim.new(0, 3)
         LoadButtonCorner.Parent = LoadButton
 
-        -- Add border to button
         local LoadButtonBorder = Instance.new("UIStroke")
         LoadButtonBorder.Color = Colors.DarkBorder
         LoadButtonBorder.Thickness = 1
@@ -1327,11 +1286,11 @@ function DeltaLib:CreateWindow(title, size)
                 configName = "default"
             end
             
-            if LoadConfiguration(configName) then
+            local success, message = LoadConfiguration(configName)
+            if success then
                 CurrentConfig = configName
                 ConfigNameInput.Text = configName
                 
-                -- Show success feedback
                 LoadButton.Text = "✓ Loaded!"
                 LoadButton.BackgroundColor3 = Colors.Success
                 
@@ -1340,7 +1299,6 @@ function DeltaLib:CreateWindow(title, size)
                 LoadButton.Text = "Load Configuration"
                 LoadButton.BackgroundColor3 = Colors.DarkBackground
             else
-                -- Show error feedback
                 LoadButton.Text = "✗ Failed!"
                 LoadButton.BackgroundColor3 = Colors.Error
                 
@@ -1351,7 +1309,7 @@ function DeltaLib:CreateWindow(title, size)
             end
         end)
 
-        -- Config List Section (Window-specific configs)
+        -- Config List Section
         local ConfigListSection = Instance.new("Frame")
         ConfigListSection.Name = "ConfigListSection"
         ConfigListSection.Size = UDim2.new(1, 0, 0, configListHeight + 25)
@@ -1364,7 +1322,6 @@ function DeltaLib:CreateWindow(title, size)
         ConfigListCorner.CornerRadius = UDim.new(0, 3)
         ConfigListCorner.Parent = ConfigListSection
 
-        -- Add border to section
         local ListBorder = Instance.new("UIStroke")
         ListBorder.Color = Colors.DarkBorder
         ListBorder.Thickness = 1
@@ -1395,7 +1352,6 @@ function DeltaLib:CreateWindow(title, size)
         ConfigList.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
         ConfigList.Parent = ConfigListSection
 
-        -- Add border to list
         local ConfigListBorder = Instance.new("UIStroke")
         ConfigListBorder.Color = Colors.DarkBorder
         ConfigListBorder.Thickness = 1
@@ -1413,16 +1369,13 @@ function DeltaLib:CreateWindow(title, size)
         ConfigListPadding.PaddingBottom = UDim.new(0, 5)
         ConfigListPadding.Parent = ConfigList
 
-        -- Function to refresh config list with delete buttons
         function RefreshConfigList()
-            -- Clear existing items
             for _, child in ipairs(ConfigList:GetChildren()) do
                 if child:IsA("Frame") and child.Name:match("^ConfigItem_") then
                     child:Destroy()
                 end
             end
 
-            -- Add config items
             local configs = ListConfigurations()
             ConfigListLabel.Text = "Configurations (" .. #configs .. ")"
             
@@ -1434,7 +1387,6 @@ function DeltaLib:CreateWindow(title, size)
                 ConfigItem.LayoutOrder = _
                 ConfigItem.Parent = ConfigList
 
-                -- Config name button (load on click)
                 local ConfigNameButton = Instance.new("TextButton")
                 ConfigNameButton.Name = "ConfigNameButton"
                 ConfigNameButton.Size = UDim2.new(1, -25, 1, 0)
@@ -1450,13 +1402,11 @@ function DeltaLib:CreateWindow(title, size)
                 ConfigNameButtonCorner.CornerRadius = UDim.new(0, 3)
                 ConfigNameButtonCorner.Parent = ConfigNameButton
 
-                -- Add border to config name button
                 local NameButtonBorder = Instance.new("UIStroke")
                 NameButtonBorder.Color = Colors.DarkBorder
                 NameButtonBorder.Thickness = 1
                 NameButtonBorder.Parent = ConfigNameButton
 
-                -- Delete button
                 local DeleteConfigButton = Instance.new("TextButton")
                 DeleteConfigButton.Name = "DeleteConfigButton"
                 DeleteConfigButton.Size = UDim2.new(0, 22, 1, 0)
@@ -1473,19 +1423,16 @@ function DeltaLib:CreateWindow(title, size)
                 DeleteButtonCorner.CornerRadius = UDim.new(0, 3)
                 DeleteButtonCorner.Parent = DeleteConfigButton
 
-                -- Add border to delete button
                 local DeleteButtonBorder = Instance.new("UIStroke")
                 DeleteButtonBorder.Color = Colors.DarkBorder
                 DeleteButtonBorder.Thickness = 1
                 DeleteButtonBorder.Parent = DeleteConfigButton
 
-                -- Config name button click (load config)
                 SafeConnect(ConfigNameButton.MouseButton1Click, function()
                     CurrentConfig = configName
                     ConfigNameInput.Text = configName
                     LoadConfiguration(configName)
                     
-                    -- Highlight selected item
                     for _, item in ipairs(ConfigList:GetChildren()) do
                         if item:IsA("Frame") and item:FindFirstChild("ConfigNameButton") then
                             item.ConfigNameButton.BackgroundColor3 = Colors.PanelBackground
@@ -1494,7 +1441,6 @@ function DeltaLib:CreateWindow(title, size)
                     ConfigNameButton.BackgroundColor3 = Colors.NeonRed
                 end)
 
-                -- Config name button hover effects
                 SafeConnect(ConfigNameButton.MouseEnter, function()
                     if ConfigNameButton.BackgroundColor3 ~= Colors.NeonRed then
                         ConfigNameButton.BackgroundColor3 = Colors.LightNeonRed
@@ -1507,14 +1453,11 @@ function DeltaLib:CreateWindow(title, size)
                     end
                 end)
 
-                -- Delete button click (delete config)
                 SafeConnect(DeleteConfigButton.MouseButton1Click, function()
                     if DeleteConfiguration(configName) then
-                        -- Remove from list
                         ConfigItem:Destroy()
                         ConfigListLabel.Text = "Configurations (" .. (#configs - 1) .. ")"
                         
-                        -- Update input if we deleted current config
                         if CurrentConfig == configName then
                             CurrentConfig = "default"
                             ConfigNameInput.Text = "default"
@@ -1522,7 +1465,6 @@ function DeltaLib:CreateWindow(title, size)
                     end
                 end)
 
-                -- Delete button hover effects
                 SafeConnect(DeleteConfigButton.MouseEnter, function()
                     DeleteConfigButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
                 end)
@@ -1533,7 +1475,6 @@ function DeltaLib:CreateWindow(title, size)
             end
         end
 
-        -- Refresh button
         local RefreshButton = Instance.new("TextButton")
         RefreshButton.Name = "RefreshButton"
         RefreshButton.Size = UDim2.new(0, 60, 0, 18)
@@ -1550,7 +1491,6 @@ function DeltaLib:CreateWindow(title, size)
         RefreshButtonCorner.CornerRadius = UDim.new(0, 3)
         RefreshButtonCorner.Parent = RefreshButton
 
-        -- Add border to refresh button
         local RefreshBorder = Instance.new("UIStroke")
         RefreshBorder.Color = Colors.DarkBorder
         RefreshBorder.Thickness = 1
@@ -1560,21 +1500,17 @@ function DeltaLib:CreateWindow(title, size)
             RefreshConfigList()
         end)
 
-        -- Auto-size the content
         SafeConnect(ConfigLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
             ConfigContent.CanvasSize = UDim2.new(0, 0, 0, ConfigLayout.AbsoluteContentSize.Y + 12)
         end)
 
-        -- Initial refresh
         RefreshConfigList()
         
-        -- Clean up when window is destroyed
         ConfigWindow.Destroying:Connect(function()
             OpenConfigManagers[DeltaLibGUI] = nil
         end)
     end
 
-    -- Connect config button with debounce
     SafeConnect(ConfigButton.MouseButton1Click, function()
         ShowConfigManager()
     end)
@@ -1592,15 +1528,30 @@ function DeltaLib:CreateWindow(title, size)
         end)
     end
 
-    -- Load config settings and auto-load config if enabled
+    -- Load config settings and auto-load config if enabled - FIXED
     if IsFileSystemAvailable() then
         LoadConfigSettings()
         
-        -- Auto-load config if enabled
         if ConfigSettings.AutoLoadConfig and ConfigSettings.LastLoadedConfig ~= "" then
             task.spawn(function()
-                task.wait(0.5) -- Wait for UI to initialize
-                LoadConfiguration(ConfigSettings.LastLoadedConfig)
+                task.wait(1)
+                
+                local configExists = false
+                pcall(function()
+                    local fileName = GetConfigFileName(ConfigSettings.LastLoadedConfig)
+                    local filePath = ConfigPath .. "/" .. fileName
+                    configExists = isfile(filePath)
+                end)
+                
+                if configExists then
+                    local success, message = pcall(function()
+                        return LoadConfiguration(ConfigSettings.LastLoadedConfig)
+                    end)
+                    
+                    if not success then
+                        warn("DeltaLib: Failed to auto-load config: " .. tostring(message))
+                    end
+                end
             end)
         end
     end
@@ -1609,40 +1560,36 @@ function DeltaLib:CreateWindow(title, size)
     function Window:CreateTab(tabName)
         local Tab = {}
 
-        -- Tab Button
         local TabButton = Instance.new("TextButton")
         TabButton.Name = tabName.."Button"
 
-        -- Use pcall to safely get text size
-        local textWidth = 80 -- Default width
+        local textWidth = 80
         pcall(function()
             textWidth = TextService:GetTextSize(tabName, 12, Enum.Font.GothamSemibold, Vector2.new(math.huge, 20)).X + 16
         end)
 
-        TabButton.Size = UDim2.new(0, textWidth, 1, -6) -- Smaller tab button
-        TabButton.Position = UDim2.new(0, 0, 0, 3) -- Centered vertically
+        TabButton.Size = UDim2.new(0, textWidth, 1, -6)
+        TabButton.Position = UDim2.new(0, 0, 0, 3)
         TabButton.BackgroundColor3 = Colors.DarkBackground
         TabButton.BorderSizePixel = 0
         TabButton.Text = tabName
         TabButton.TextColor3 = Colors.SubText
-        TabButton.TextSize = 12 -- Smaller text size
+        TabButton.TextSize = 12
         TabButton.Font = Enum.Font.GothamSemibold
         TabButton.Parent = TabButtons
 
         local TabButtonCorner = Instance.new("UICorner")
-        TabButtonCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
+        TabButtonCorner.CornerRadius = UDim.new(0, 3)
         TabButtonCorner.Parent = TabButton
 
-        -- Add border to tab button
         local TabButtonStroke = Instance.new("UIStroke")
         TabButtonStroke.Color = Colors.DarkBorder
         TabButtonStroke.Thickness = 1
         TabButtonStroke.Parent = TabButton
 
-        -- Tab Content
         local TabContent = Instance.new("ScrollingFrame")
         TabContent.Name = tabName.."Content"
-        TabContent.Size = UDim2.new(1, -16, 1, -8) -- Smaller content area
+        TabContent.Size = UDim2.new(1, -16, 1, -8)
         TabContent.Position = UDim2.new(0, 8, 0, 4)
         TabContent.BackgroundTransparency = 1
         TabContent.BorderSizePixel = 0
@@ -1656,43 +1603,37 @@ function DeltaLib:CreateWindow(title, size)
 
         local TabContentLayout = Instance.new("UIListLayout")
         TabContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        TabContentLayout.Padding = UDim.new(0, 8) -- Smaller padding
+        TabContentLayout.Padding = UDim.new(0, 8)
         TabContentLayout.Parent = TabContent
 
         local TabContentPadding = Instance.new("UIPadding")
-        TabContentPadding.PaddingTop = UDim.new(0, 4) -- Smaller padding
-        TabContentPadding.PaddingBottom = UDim.new(0, 4) -- Smaller padding
+        TabContentPadding.PaddingTop = UDim.new(0, 4)
+        TabContentPadding.PaddingBottom = UDim.new(0, 4)
         TabContentPadding.Parent = TabContent
 
-        -- Tab Selection Logic with error handling
         SafeConnect(TabButton.MouseButton1Click, function()
             pcall(function()
                 if SelectedTab then
-                    -- Deselect current tab
                     SelectedTab.Button.BackgroundColor3 = Colors.DarkBackground
                     SelectedTab.Button.TextColor3 = Colors.SubText
                     SelectedTab.Content.Visible = false
                 end
 
-                -- Select new tab
                 TabButton.BackgroundColor3 = Colors.NeonRed
                 TabButton.TextColor3 = Colors.Text
                 TabContent.Visible = true
                 SelectedTab = {Button = TabButton, Content = TabContent}
 
-                -- Scroll to make the selected tab visible
                 local buttonPosition = TabButton.AbsolutePosition.X - TabScrollFrame.AbsolutePosition.X
                 local buttonEnd = buttonPosition + TabButton.AbsoluteSize.X
                 local viewportWidth = TabScrollFrame.AbsoluteSize.X
 
                 if buttonPosition < 0 then
-                    -- Button is to the left of the visible area
                     local targetPos = TabScrollFrame.CanvasPosition.X + buttonPosition - 8
                     TweenService:Create(TabScrollFrame, TweenInfo.new(0.3), {
                         CanvasPosition = Vector2.new(math.max(targetPos, 0), 0)
                     }):Play()
                 elseif buttonEnd > viewportWidth then
-                    -- Button is to the right of the visible area
                     local targetPos = TabScrollFrame.CanvasPosition.X + (buttonEnd - viewportWidth) + 8
                     local maxScroll = TabScrollFrame.CanvasSize.X.Offset - viewportWidth
                     TweenService:Create(TabScrollFrame, TweenInfo.new(0.3), {
@@ -1702,10 +1643,8 @@ function DeltaLib:CreateWindow(title, size)
             end)
         end)
 
-        -- Add to tabs table
         table.insert(Tabs, {Button = TabButton, Content = TabContent})
 
-        -- If this is the first tab, select it
         if #Tabs == 1 then
             TabButton.BackgroundColor3 = Colors.NeonRed
             TabButton.TextColor3 = Colors.Text
@@ -1713,45 +1652,40 @@ function DeltaLib:CreateWindow(title, size)
             SelectedTab = {Button = TabButton, Content = TabContent}
         end
 
-        -- Section Creation Function
         function Tab:CreateSection(sectionName)
             local Section = {}
 
-            -- Section Container
             local SectionContainer = Instance.new("Frame")
             SectionContainer.Name = sectionName.."Section"
-            SectionContainer.Size = UDim2.new(1, 0, 0, 25) -- Will be resized based on content
+            SectionContainer.Size = UDim2.new(1, 0, 0, 25)
             SectionContainer.BackgroundColor3 = Colors.LightBackground
             SectionContainer.BorderSizePixel = 0
             SectionContainer.Parent = TabContent
 
             local SectionCorner = Instance.new("UICorner")
-            SectionCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
+            SectionCorner.CornerRadius = UDim.new(0, 3)
             SectionCorner.Parent = SectionContainer
 
-            -- Add border to section
             local SectionStroke = Instance.new("UIStroke")
             SectionStroke.Color = Colors.DarkBorder
             SectionStroke.Thickness = 1
             SectionStroke.Parent = SectionContainer
 
-            -- Section Title
             local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Name = "SectionTitle"
-            SectionTitle.Size = UDim2.new(1, -8, 0, 20) -- Smaller title
+            SectionTitle.Size = UDim2.new(1, -8, 0, 20)
             SectionTitle.Position = UDim2.new(0, 8, 0, 0)
             SectionTitle.BackgroundTransparency = 1
             SectionTitle.Text = sectionName
             SectionTitle.TextColor3 = Colors.NeonRed
-            SectionTitle.TextSize = 12 -- Smaller text size
+            SectionTitle.TextSize = 12
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.Parent = SectionContainer
 
-            -- Section Content with Scrolling
             local SectionScrollFrame = Instance.new("ScrollingFrame")
             SectionScrollFrame.Name = "SectionScrollFrame"
-            SectionScrollFrame.Size = UDim2.new(1, -16, 0, 80) -- Initial height, will be adjusted
+            SectionScrollFrame.Size = UDim2.new(1, -16, 0, 80)
             SectionScrollFrame.Position = UDim2.new(0, 8, 0, 20)
             SectionScrollFrame.BackgroundTransparency = 1
             SectionScrollFrame.BorderSizePixel = 0
@@ -1760,38 +1694,34 @@ function DeltaLib:CreateWindow(title, size)
             SectionScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
             SectionScrollFrame.ScrollingEnabled = true
             SectionScrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-            SectionScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will be updated dynamically
+            SectionScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
             SectionScrollFrame.Parent = SectionContainer
 
             local SectionContent = Instance.new("Frame")
             SectionContent.Name = "SectionContent"
-            SectionContent.Size = UDim2.new(1, 0, 0, 0) -- Will be resized based on content
+            SectionContent.Size = UDim2.new(1, 0, 0, 0)
             SectionContent.BackgroundTransparency = 1
             SectionContent.Parent = SectionScrollFrame
 
             local SectionContentLayout = Instance.new("UIListLayout")
             SectionContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            SectionContentLayout.Padding = UDim.new(0, 6) -- Smaller padding
+            SectionContentLayout.Padding = UDim.new(0, 6)
             SectionContentLayout.Parent = SectionContent
 
-            -- Auto-size the section based on content with error handling
             SafeConnect(SectionContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
                 pcall(function()
                     local contentHeight = SectionContentLayout.AbsoluteContentSize.Y
                     SectionContent.Size = UDim2.new(1, 0, 0, contentHeight)
-
-                    -- Adjust the section height (capped at 150 for scrolling)
-                    local newHeight = math.min(contentHeight, 150) -- Smaller max height
+                    local newHeight = math.min(contentHeight, 150)
                     SectionScrollFrame.Size = UDim2.new(1, -16, 0, newHeight)
-                    SectionContainer.Size = UDim2.new(1, 0, 0, newHeight + 28) -- +28 for the title
+                    SectionContainer.Size = UDim2.new(1, 0, 0, newHeight + 28)
                 end)
             end)
 
-            -- Label Creation Function
             function Section:AddLabel(labelText)
                 local LabelContainer = Instance.new("Frame")
                 LabelContainer.Name = "LabelContainer"
-                LabelContainer.Size = UDim2.new(1, 0, 0, 16) -- Smaller label
+                LabelContainer.Size = UDim2.new(1, 0, 0, 16)
                 LabelContainer.BackgroundTransparency = 1
                 LabelContainer.Parent = SectionContent
 
@@ -1801,7 +1731,7 @@ function DeltaLib:CreateWindow(title, size)
                 Label.BackgroundTransparency = 1
                 Label.Text = labelText
                 Label.TextColor3 = Colors.Text
-                Label.TextSize = 12 -- Smaller text size
+                Label.TextSize = 12
                 Label.Font = Enum.Font.Gotham
                 Label.TextXAlignment = Enum.TextXAlignment.Left
                 Label.Parent = LabelContainer
@@ -1817,13 +1747,12 @@ function DeltaLib:CreateWindow(title, size)
                 return LabelFunctions
             end
 
-            -- Button Creation Function
             function Section:AddButton(buttonText, callback)
                 callback = callback or function() end
 
                 local ButtonContainer = Instance.new("Frame")
                 ButtonContainer.Name = "ButtonContainer"
-                ButtonContainer.Size = UDim2.new(1, 0, 0, 24) -- Smaller button
+                ButtonContainer.Size = UDim2.new(1, 0, 0, 24)
                 ButtonContainer.BackgroundTransparency = 1
                 ButtonContainer.Parent = SectionContent
 
@@ -1834,21 +1763,19 @@ function DeltaLib:CreateWindow(title, size)
                 Button.BorderSizePixel = 0
                 Button.Text = buttonText
                 Button.TextColor3 = Colors.Text
-                Button.TextSize = 12 -- Smaller text size
+                Button.TextSize = 12
                 Button.Font = Enum.Font.Gotham
                 Button.Parent = ButtonContainer
 
                 local ButtonCorner = Instance.new("UICorner")
-                ButtonCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
+                ButtonCorner.CornerRadius = UDim.new(0, 3)
                 ButtonCorner.Parent = Button
 
-                -- Add border to button
                 local ButtonStroke = Instance.new("UIStroke")
                 ButtonStroke.Color = Colors.DarkBorder
                 ButtonStroke.Thickness = 1
                 ButtonStroke.Parent = Button
 
-                -- Button Effects
                 SafeConnect(Button.MouseEnter, function()
                     Button.BackgroundColor3 = Colors.NeonRed
                 end)
@@ -1873,14 +1800,13 @@ function DeltaLib:CreateWindow(title, size)
                 return ButtonFunctions
             end
 
-            -- Toggle Creation Function with config registration
             function Section:AddToggle(toggleText, default, callback)
                 default = default or false
                 callback = callback or function() end
 
                 local ToggleContainer = Instance.new("Frame")
                 ToggleContainer.Name = "ToggleContainer"
-                ToggleContainer.Size = UDim2.new(1, 0, 0, 20) -- Smaller toggle
+                ToggleContainer.Size = UDim2.new(1, 0, 0, 20)
                 ToggleContainer.BackgroundTransparency = 1
                 ToggleContainer.Parent = SectionContent
 
@@ -1890,14 +1816,14 @@ function DeltaLib:CreateWindow(title, size)
                 ToggleLabel.BackgroundTransparency = 1
                 ToggleLabel.Text = toggleText
                 ToggleLabel.TextColor3 = Colors.Text
-                ToggleLabel.TextSize = 12 -- Smaller text size
+                ToggleLabel.TextSize = 12
                 ToggleLabel.Font = Enum.Font.Gotham
                 ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
                 ToggleLabel.Parent = ToggleContainer
 
                 local ToggleButton = Instance.new("Frame")
                 ToggleButton.Name = "ToggleButton"
-                ToggleButton.Size = UDim2.new(0, 32, 0, 16) -- Smaller toggle button
+                ToggleButton.Size = UDim2.new(0, 32, 0, 16)
                 ToggleButton.Position = UDim2.new(1, -32, 0, 2)
                 ToggleButton.BackgroundColor3 = Colors.DarkBackground
                 ToggleButton.BorderSizePixel = 0
@@ -1907,7 +1833,6 @@ function DeltaLib:CreateWindow(title, size)
                 ToggleButtonCorner.CornerRadius = UDim.new(1, 0)
                 ToggleButtonCorner.Parent = ToggleButton
 
-                -- Add border to toggle
                 local ToggleStroke = Instance.new("UIStroke")
                 ToggleStroke.Color = Colors.DarkBorder
                 ToggleStroke.Thickness = 1
@@ -1915,7 +1840,7 @@ function DeltaLib:CreateWindow(title, size)
 
                 local ToggleCircle = Instance.new("Frame")
                 ToggleCircle.Name = "ToggleCircle"
-                ToggleCircle.Size = UDim2.new(0, 12, 0, 12) -- Smaller toggle circle
+                ToggleCircle.Size = UDim2.new(0, 12, 0, 12)
                 ToggleCircle.Position = UDim2.new(0, 2, 0, 2)
                 ToggleCircle.BackgroundColor3 = Colors.Text
                 ToggleCircle.BorderSizePixel = 0
@@ -1925,7 +1850,6 @@ function DeltaLib:CreateWindow(title, size)
                 ToggleCircleCorner.CornerRadius = UDim.new(1, 0)
                 ToggleCircleCorner.Parent = ToggleCircle
 
-                -- Make the entire container clickable
                 local ToggleClickArea = Instance.new("TextButton")
                 ToggleClickArea.Name = "ToggleClickArea"
                 ToggleClickArea.Size = UDim2.new(1, 0, 1, 0)
@@ -1933,10 +1857,8 @@ function DeltaLib:CreateWindow(title, size)
                 ToggleClickArea.Text = ""
                 ToggleClickArea.Parent = ToggleContainer
 
-                -- Toggle State
                 local Enabled = default
 
-                -- Update toggle appearance based on state
                 local function UpdateToggle()
                     pcall(function()
                         if Enabled then
@@ -1949,17 +1871,14 @@ function DeltaLib:CreateWindow(title, size)
                     end)
                 end
 
-                -- Set initial state
                 UpdateToggle()
 
-                -- Toggle Logic
                 SafeConnect(ToggleClickArea.MouseButton1Click, function()
                     Enabled = not Enabled
                     UpdateToggle()
                     SafeCall(callback, Enabled)
                 end)
 
-                -- Register for configuration
                 local elementId = tabName .. "_" .. sectionName .. "_" .. toggleText
                 RegisterConfigElement(elementId, "Toggle", tabName, sectionName,
                     function() return Enabled end,
@@ -1986,7 +1905,6 @@ function DeltaLib:CreateWindow(title, size)
                 return ToggleFunctions
             end
 
-            -- Slider Creation Function - Improved for PC and Android with error handling and config registration
             function Section:AddSlider(sliderText, min, max, default, callback)
                 min = min or 0
                 max = max or 100
@@ -1995,36 +1913,36 @@ function DeltaLib:CreateWindow(title, size)
 
                 local SliderContainer = Instance.new("Frame")
                 SliderContainer.Name = "SliderContainer"
-                SliderContainer.Size = UDim2.new(1, 0, 0, 36) -- Smaller slider
+                SliderContainer.Size = UDim2.new(1, 0, 0, 36)
                 SliderContainer.BackgroundTransparency = 1
                 SliderContainer.Parent = SectionContent
 
                 local SliderLabel = Instance.new("TextLabel")
                 SliderLabel.Name = "SliderLabel"
-                SliderLabel.Size = UDim2.new(1, 0, 0, 16) -- Smaller label
+                SliderLabel.Size = UDim2.new(1, 0, 0, 16)
                 SliderLabel.BackgroundTransparency = 1
                 SliderLabel.Text = sliderText
                 SliderLabel.TextColor3 = Colors.Text
-                SliderLabel.TextSize = 12 -- Smaller text size
+                SliderLabel.TextSize = 12
                 SliderLabel.Font = Enum.Font.Gotham
                 SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
                 SliderLabel.Parent = SliderContainer
 
                 local SliderValue = Instance.new("TextLabel")
                 SliderValue.Name = "SliderValue"
-                SliderValue.Size = UDim2.new(0, 25, 0, 16) -- Smaller value label
+                SliderValue.Size = UDim2.new(0, 25, 0, 16)
                 SliderValue.Position = UDim2.new(1, -25, 0, 0)
                 SliderValue.BackgroundTransparency = 1
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = Colors.NeonRed
-                SliderValue.TextSize = 12 -- Smaller text size
+                SliderValue.TextSize = 12
                 SliderValue.Font = Enum.Font.GothamBold
                 SliderValue.TextXAlignment = Enum.TextXAlignment.Right
                 SliderValue.Parent = SliderContainer
 
                 local SliderBackground = Instance.new("Frame")
                 SliderBackground.Name = "SliderBackground"
-                SliderBackground.Size = UDim2.new(1, 0, 0, 8) -- Smaller slider bar
+                SliderBackground.Size = UDim2.new(1, 0, 0, 8)
                 SliderBackground.Position = UDim2.new(0, 0, 0, 20)
                 SliderBackground.BackgroundColor3 = Colors.DarkBackground
                 SliderBackground.BorderSizePixel = 0
@@ -2034,7 +1952,6 @@ function DeltaLib:CreateWindow(title, size)
                 SliderBackgroundCorner.CornerRadius = UDim.new(1, 0)
                 SliderBackgroundCorner.Parent = SliderBackground
 
-                -- Add border to slider background
                 local SliderBackgroundStroke = Instance.new("UIStroke")
                 SliderBackgroundStroke.Color = Colors.DarkBorder
                 SliderBackgroundStroke.Thickness = 1
@@ -2058,11 +1975,10 @@ function DeltaLib:CreateWindow(title, size)
                 SliderButton.Text = ""
                 SliderButton.Parent = SliderBackground
 
-                -- Slider Logic with error handling
                 local function UpdateSlider(value)
                     pcall(function()
                         value = math.clamp(value, min, max)
-                        value = math.floor(value + 0.5) -- Round to nearest integer
+                        value = math.floor(value + 0.5)
 
                         SliderValue.Text = tostring(value)
                         SliderFill.Size = UDim2.new((value - min) / (max - min), 0, 1, 0)
@@ -2070,22 +1986,17 @@ function DeltaLib:CreateWindow(title, size)
                     end)
                 end
 
-                -- Set initial value
                 UpdateSlider(default)
 
-                -- Improved Slider Interaction for PC and Android with error handling
                 local isDragging = false
 
                 SafeConnect(SliderButton.InputBegan, function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         isDragging = true
-
-                        -- Calculate value directly from initial press position
                         pcall(function()
                             local relativePos = input.Position.X - SliderBackground.AbsolutePosition.X
                             local percent = math.clamp(relativePos / SliderBackground.AbsoluteSize.X, 0, 1)
                             local value = min + (max - min) * percent
-
                             UpdateSlider(value)
                         end)
                     end
@@ -2099,18 +2010,15 @@ function DeltaLib:CreateWindow(title, size)
 
                 SafeConnect(UserInputService.InputChanged, function(input)
                     if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        -- Use delta movement for smoother control
                         pcall(function()
                             local relativePos = input.Position.X - SliderBackground.AbsolutePosition.X
                             local percent = math.clamp(relativePos / SliderBackground.AbsoluteSize.X, 0, 1)
                             local value = min + (max - min) * percent
-
                             UpdateSlider(value)
                         end)
                     end
                 end)
 
-                -- Register for configuration
                 local elementId = tabName .. "_" .. sectionName .. "_" .. sliderText
                 RegisterConfigElement(elementId, "Slider", tabName, sectionName,
                     function() return tonumber(SliderValue.Text) end,
@@ -2131,7 +2039,6 @@ function DeltaLib:CreateWindow(title, size)
                 return SliderFunctions
             end
 
-            -- REGULAR DROPDOWN (SINGLE SELECT)
             function Section:AddDropdown(dropdownText, options, default, callback)
                 local DropdownFunctions = {}
                 options = options or {}
@@ -2258,19 +2165,14 @@ function DeltaLib:CreateWindow(title, size)
 
                     if isOpen then
                         DropdownList.Visible = true
-
                         local optionsHeight = math.min(#options * 28 + 8, 140)
-
                         TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
                         TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
-
                         DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
-
                         task.delay(0.3, function() isAnimating = false end)
                     else
                         TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 0)}):Play()
                         TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40)}):Play()
-
                         task.delay(0.3, function()
                             DropdownList.Visible = false
                             isAnimating = false
@@ -2377,7 +2279,6 @@ function DeltaLib:CreateWindow(title, size)
                     end
                 end)
 
-                -- Register for configuration
                 local elementId = tabName .. "_" .. sectionName .. "_" .. dropdownText
                 RegisterConfigElement(elementId, "Dropdown", tabName, sectionName,
                     function() return SelectedTextBox.Text end,
@@ -2427,7 +2328,6 @@ function DeltaLib:CreateWindow(title, size)
                 return DropdownFunctions
             end
 
-            -- MULTI-SELECT DROPDOWN (NO BOOLEAN PARAMETER)
             function Section:AddMultiDropdown(dropdownText, options, default, callback)
                 local DropdownFunctions = {}
                 options = options or {}
@@ -2545,7 +2445,6 @@ function DeltaLib:CreateWindow(title, size)
                 local isAnimating = false
                 local selectedOptions = {}
 
-                -- Initialize with default options
                 for _, option in ipairs(default) do
                     if table.find(options, option) then
                         selectedOptions[option] = true
@@ -2584,19 +2483,14 @@ function DeltaLib:CreateWindow(title, size)
 
                     if isOpen then
                         DropdownList.Visible = true
-
                         local optionsHeight = math.min(#options * 28 + 8, 140)
-
                         TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
                         TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40 + optionsHeight)}):Play()
-
                         DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 8)
-
                         task.delay(0.3, function() isAnimating = false end)
                     else
                         TweenService:Create(DropdownList, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 0)}):Play()
                         TweenService:Create(DropdownContainer, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 40)}):Play()
-
                         task.delay(0.3, function()
                             DropdownList.Visible = false
                             isAnimating = false
@@ -2640,7 +2534,6 @@ function DeltaLib:CreateWindow(title, size)
                     OptionText.ZIndex = 1003
                     OptionText.Parent = OptionButton
 
-                    -- Checkbox for multi-select
                     local Checkbox = Instance.new("Frame")
                     Checkbox.Name = "Checkbox"
                     Checkbox.Size = UDim2.new(0, 14, 0, 14)
@@ -2675,13 +2568,11 @@ function DeltaLib:CreateWindow(title, size)
                     OptionButton.MouseButton1Down:Connect(function()
                         if isAnimating then return end
                         
-                        -- Toggle selection for multi-select (always multi-select now)
                         selectedOptions[option] = not selectedOptions[option]
                         Checkmark.Visible = selectedOptions[option]
                         
                         UpdateSelectedText()
                         task.spawn(function()
-                            -- Get current selected options
                             local currentSelected = {}
                             for opt, selected in pairs(selectedOptions) do
                                 if selected then
@@ -2734,7 +2625,6 @@ function DeltaLib:CreateWindow(title, size)
                     end
                 end)
 
-                -- Register for configuration
                 local elementId = tabName .. "_" .. sectionName .. "_" .. dropdownText
                 RegisterConfigElement(elementId, "MultiDropdown", tabName, sectionName,
                     function() 
@@ -2754,7 +2644,6 @@ function DeltaLib:CreateWindow(title, size)
                             end
                         end
                         
-                        -- Update checkmarks
                         for option, checkmark in pairs(OptionCheckmarks) do
                             if checkmark then
                                 checkmark.Visible = selectedOptions[option] or false
@@ -2774,7 +2663,6 @@ function DeltaLib:CreateWindow(title, size)
                         end
                     end
                     
-                    -- Update checkmarks
                     for option, checkmark in pairs(OptionCheckmarks) do
                         if checkmark then
                             checkmark.Visible = selectedOptions[option] or false
@@ -2783,7 +2671,6 @@ function DeltaLib:CreateWindow(title, size)
                     
                     UpdateSelectedText()
                     
-                    -- Get current selected options
                     local currentSelected = {}
                     for opt, selected in pairs(selectedOptions) do
                         if selected then
@@ -2815,7 +2702,6 @@ function DeltaLib:CreateWindow(title, size)
                     OptionCheckmarks = {}
                     selectedOptions = {}
 
-                    -- Initialize with new default options
                     for _, option in ipairs(newDefault) do
                         if table.find(options, option) then
                             selectedOptions[option] = true
@@ -2839,7 +2725,6 @@ function DeltaLib:CreateWindow(title, size)
                 return DropdownFunctions
             end
 
-            -- TextBox Creation Function with error handling and config registration
             function Section:AddTextBox(boxText, placeholder, default, callback)
                 placeholder = placeholder or ""
                 default = default or ""
@@ -2847,24 +2732,24 @@ function DeltaLib:CreateWindow(title, size)
 
                 local TextBoxContainer = Instance.new("Frame")
                 TextBoxContainer.Name = "TextBoxContainer"
-                TextBoxContainer.Size = UDim2.new(1, 0, 0, 36) -- Smaller textbox
+                TextBoxContainer.Size = UDim2.new(1, 0, 0, 36)
                 TextBoxContainer.BackgroundTransparency = 1
                 TextBoxContainer.Parent = SectionContent
 
                 local TextBoxLabel = Instance.new("TextLabel")
                 TextBoxLabel.Name = "TextBoxLabel"
-                TextBoxLabel.Size = UDim2.new(1, 0, 0, 16) -- Smaller label
+                TextBoxLabel.Size = UDim2.new(1, 0, 0, 16)
                 TextBoxLabel.BackgroundTransparency = 1
                 TextBoxLabel.Text = boxText
                 TextBoxLabel.TextColor3 = Colors.Text
-                TextBoxLabel.TextSize = 12 -- Smaller text size
+                TextBoxLabel.TextSize = 12
                 TextBoxLabel.Font = Enum.Font.Gotham
                 TextBoxLabel.TextXAlignment = Enum.TextXAlignment.Left
                 TextBoxLabel.Parent = TextBoxContainer
 
                 local TextBox = Instance.new("TextBox")
                 TextBox.Name = "TextBox"
-                TextBox.Size = UDim2.new(1, 0, 0, 20) -- Smaller textbox
+                TextBox.Size = UDim2.new(1, 0, 0, 20)
                 TextBox.Position = UDim2.new(0, 0, 0, 16)
                 TextBox.BackgroundColor3 = Colors.DarkBackground
                 TextBox.BorderSizePixel = 0
@@ -2872,27 +2757,25 @@ function DeltaLib:CreateWindow(title, size)
                 TextBox.Text = default
                 TextBox.TextColor3 = Colors.Text
                 TextBox.PlaceholderColor3 = Colors.SubText
-                TextBox.TextSize = 12 -- Smaller text size
+                TextBox.TextSize = 12
                 TextBox.Font = Enum.Font.Gotham
                 TextBox.TextXAlignment = Enum.TextXAlignment.Left
                 TextBox.ClearTextOnFocus = false
                 TextBox.Parent = TextBoxContainer
 
                 local TextBoxPadding = Instance.new("UIPadding")
-                TextBoxPadding.PaddingLeft = UDim.new(0, 8) -- Smaller padding
+                TextBoxPadding.PaddingLeft = UDim.new(0, 8)
                 TextBoxPadding.Parent = TextBox
 
                 local TextBoxCorner = Instance.new("UICorner")
-                TextBoxCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
+                TextBoxCorner.CornerRadius = UDim.new(0, 3)
                 TextBoxCorner.Parent = TextBox
 
-                -- Add border to textbox
                 local TextBoxStroke = Instance.new("UIStroke")
                 TextBoxStroke.Color = Colors.DarkBorder
                 TextBoxStroke.Thickness = 1
                 TextBoxStroke.Parent = TextBox
 
-                -- TextBox Logic with error handling
                 SafeConnect(TextBox.Focused, function()
                     pcall(function()
                         TweenService:Create(TextBox, TweenInfo.new(0.2), {BorderSizePixel = 1, BorderColor3 = Colors.NeonRed}):Play()
@@ -2906,7 +2789,6 @@ function DeltaLib:CreateWindow(title, size)
                     end)
                 end)
 
-                -- Register for configuration
                 local elementId = tabName .. "_" .. sectionName .. "_" .. boxText
                 RegisterConfigElement(elementId, "TextBox", tabName, sectionName,
                     function() return TextBox.Text end,
@@ -2939,16 +2821,13 @@ function DeltaLib:CreateWindow(title, size)
         return Tab
     end
 
-    -- Add User Profile Section with error handling
     function Window:AddUserProfile(displayName)
         displayName = displayName or Player.DisplayName
 
-        -- Update username label
         pcall(function()
             UsernameLabel.Text = displayName
         end)
 
-        -- Create a function to update the avatar
         local function UpdateAvatar(userId)
             pcall(function()
                 AvatarImage.Image = GetPlayerAvatar(userId or Player.UserId, "100x100")
@@ -2965,7 +2844,6 @@ function DeltaLib:CreateWindow(title, size)
         }
     end
 
-    -- Configuration functions for the window
     function Window:SaveConfig(configName)
         return SaveConfiguration(configName)
     end
