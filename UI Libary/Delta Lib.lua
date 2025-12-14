@@ -699,7 +699,7 @@ function DeltaLib:CreateWindow(title, size)
         
         -- Collect all settings safely
         for elementId, callbackInfo in pairs(ConfigCallbacks) do
-            if callbackInfo and callbackInfo.GetValue then
+            if callbackInfo and type(callbackInfo.GetValue) == "function" then
                 local value = SafeCall(callbackInfo.GetValue)
                 if value ~= nil then
                     configData.Settings[elementId] = {
@@ -779,14 +779,32 @@ function DeltaLib:CreateWindow(title, size)
             return false, "Failed to parse JSON: " .. tostring(decodeError)
         end
         
+        -- Check if config is from a different window
+        if configData.WindowTitle and configData.WindowTitle ~= title then
+            return false, "Config is for a different window: " .. configData.WindowTitle
+        end
+        
         -- Apply settings with error handling
         local appliedCount = 0
         local errorCount = 0
         local errors = {}
         
+        -- First, check if we have the elements registered
+        local missingElements = {}
+        for elementId, setting in pairs(configData.Settings or {}) do
+            if not ConfigCallbacks[elementId] then
+                table.insert(missingElements, elementId)
+            end
+        end
+        
+        if #missingElements > 0 then
+            -- Try to wait a bit for UI elements to be created
+            task.wait(0.5)
+        end
+        
         for elementId, setting in pairs(configData.Settings or {}) do
             local callbackInfo = ConfigCallbacks[elementId]
-            if callbackInfo and callbackInfo.SetValue then
+            if callbackInfo and type(callbackInfo.SetValue) == "function" then
                 local applySuccess, applyError = pcall(function()
                     callbackInfo.SetValue(setting.Value)
                 end)
@@ -799,7 +817,11 @@ function DeltaLib:CreateWindow(title, size)
                 end
             else
                 errorCount = errorCount + 1
-                table.insert(errors, elementId .. ": Callback not found")
+                if not callbackInfo then
+                    table.insert(errors, elementId .. ": Element not found (might be from different tab/section)")
+                else
+                    table.insert(errors, elementId .. ": SetValue is not a function")
+                end
             end
         end
         
@@ -893,6 +915,11 @@ function DeltaLib:CreateWindow(title, size)
 
     -- Function to register element for configuration
     local function RegisterConfigElement(elementId, elementType, tabName, sectionName, getCallback, setCallback)
+        if type(getCallback) ~= "function" or type(setCallback) ~= "function" then
+            warn("DeltaLib Warning: Invalid callbacks for element " .. elementId)
+            return
+        end
+        
         ConfigCallbacks[elementId] = {
             Type = elementType,
             Tab = tabName,
@@ -1306,6 +1333,15 @@ function DeltaLib:CreateWindow(title, size)
                 
                 LoadButton.Text = "Load Configuration"
                 LoadButton.BackgroundColor3 = Colors.DarkBackground
+                
+                -- Show error message
+                pcall(function()
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Config Load Error",
+                        Text = message,
+                        Duration = 5,
+                    })
+                end)
             end
         end)
 
