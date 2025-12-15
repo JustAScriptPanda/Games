@@ -682,7 +682,7 @@ function DeltaLib:CreateWindow(title, size)
         return true
     end
 
-    -- Function to save configuration - FIXED
+    -- Function to save configuration - FIXED with better error handling
     local function SaveConfiguration(configName)
         configName = configName or CurrentConfig
         
@@ -697,19 +697,31 @@ function DeltaLib:CreateWindow(title, size)
             Settings = {}
         }
         
-        -- Collect all settings safely
+        -- Collect all settings safely with validation
+        local validCount = 0
         for elementId, callbackInfo in pairs(ConfigCallbacks) do
-            if callbackInfo and type(callbackInfo.GetValue) == "function" then
-                local value = SafeCall(callbackInfo.GetValue)
-                if value ~= nil then
-                    configData.Settings[elementId] = {
-                        Type = callbackInfo.Type,
-                        Value = value,
-                        Tab = callbackInfo.Tab,
-                        Section = callbackInfo.Section
-                    }
+            if callbackInfo and type(callbackInfo) == "table" then
+                if type(callbackInfo.GetValue) == "function" then
+                    local value = SafeCall(callbackInfo.GetValue)
+                    if value ~= nil then
+                        configData.Settings[elementId] = {
+                            Type = callbackInfo.Type or "Unknown",
+                            Value = value,
+                            Tab = callbackInfo.Tab or "Unknown",
+                            Section = callbackInfo.Section or "Unknown"
+                        }
+                        validCount = validCount + 1
+                    end
+                else
+                    warn("DeltaLib: GetValue is not a function for " .. tostring(elementId))
                 end
+            else
+                warn("DeltaLib: Invalid callbackInfo for " .. tostring(elementId))
             end
+        end
+        
+        if validCount == 0 then
+            return false, "No valid configuration elements found"
         end
         
         -- Convert to JSON
@@ -731,13 +743,13 @@ function DeltaLib:CreateWindow(title, size)
         end)
         
         if success then
-            return true, "Configuration saved successfully"
+            return true, "Configuration saved successfully with " .. validCount .. " elements"
         else
             return false, "Failed to write file: " .. tostring(writeError)
         end
     end
 
-    -- Function to load configuration - FIXED
+    -- Function to load configuration - FIXED with better error handling
     local function LoadConfiguration(configName)
         configName = configName or CurrentConfig
         
@@ -779,9 +791,10 @@ function DeltaLib:CreateWindow(title, size)
             return false, "Failed to parse JSON: " .. tostring(decodeError)
         end
         
-        -- Check if config is from a different window
+        -- Check if config is from a different window (optional)
         if configData.WindowTitle and configData.WindowTitle ~= title then
-            return false, "Config is for a different window: " .. configData.WindowTitle
+            local accept = "Config is for window: " .. configData.WindowTitle .. "\nLoad anyway?"
+            -- You could add a confirmation dialog here if needed
         end
         
         -- Apply settings with error handling
@@ -789,39 +802,30 @@ function DeltaLib:CreateWindow(title, size)
         local errorCount = 0
         local errors = {}
         
-        -- First, check if we have the elements registered
-        local missingElements = {}
-        for elementId, setting in pairs(configData.Settings or {}) do
-            if not ConfigCallbacks[elementId] then
-                table.insert(missingElements, elementId)
-            end
-        end
-        
-        if #missingElements > 0 then
-            -- Try to wait a bit for UI elements to be created
-            task.wait(0.5)
-        end
+        -- Wait a bit to ensure UI elements are created
+        task.wait(0.1)
         
         for elementId, setting in pairs(configData.Settings or {}) do
             local callbackInfo = ConfigCallbacks[elementId]
-            if callbackInfo and type(callbackInfo.SetValue) == "function" then
-                local applySuccess, applyError = pcall(function()
-                    callbackInfo.SetValue(setting.Value)
-                end)
-                
-                if applySuccess then
-                    appliedCount = appliedCount + 1
+            if callbackInfo and type(callbackInfo) == "table" then
+                if type(callbackInfo.SetValue) == "function" then
+                    local applySuccess, applyError = pcall(function()
+                        callbackInfo.SetValue(setting.Value)
+                    end)
+                    
+                    if applySuccess then
+                        appliedCount = appliedCount + 1
+                    else
+                        errorCount = errorCount + 1
+                        table.insert(errors, elementId .. ": " .. tostring(applyError))
+                    end
                 else
                     errorCount = errorCount + 1
-                    table.insert(errors, elementId .. ": " .. tostring(applyError))
+                    table.insert(errors, elementId .. ": SetValue is not a function (type: " .. type(callbackInfo.SetValue) .. ")")
                 end
             else
                 errorCount = errorCount + 1
-                if not callbackInfo then
-                    table.insert(errors, elementId .. ": Element not found (might be from different tab/section)")
-                else
-                    table.insert(errors, elementId .. ": SetValue is not a function")
-                end
+                table.insert(errors, elementId .. ": Element not found")
             end
         end
         
@@ -829,9 +833,9 @@ function DeltaLib:CreateWindow(title, size)
         ConfigSettings.LastLoadedConfig = configName
         SaveConfigSettings()
         
-        local message = string.format("Loaded %d settings (failed: %d)", appliedCount, errorCount)
+        local message = string.format("Loaded %d/%d settings", appliedCount, appliedCount + errorCount)
         if #errors > 0 then
-            message = message .. "\nErrors: " .. table.concat(errors, ", ")
+            message = message .. "\nFailed: " .. table.concat(errors, ", ")
         end
         
         return true, message
@@ -913,17 +917,27 @@ function DeltaLib:CreateWindow(title, size)
         return windowConfigs
     end
 
-    -- Function to register element for configuration
+    -- Function to register element for configuration - FIXED
     local function RegisterConfigElement(elementId, elementType, tabName, sectionName, getCallback, setCallback)
-        if type(getCallback) ~= "function" or type(setCallback) ~= "function" then
-            warn("DeltaLib Warning: Invalid callbacks for element " .. elementId)
+        if type(elementId) ~= "string" then
+            warn("DeltaLib: elementId must be a string, got " .. type(elementId))
+            return
+        end
+        
+        if type(getCallback) ~= "function" then
+            warn("DeltaLib: getCallback is not a function for element " .. elementId)
+            return
+        end
+        
+        if type(setCallback) ~= "function" then
+            warn("DeltaLib: setCallback is not a function for element " .. elementId)
             return
         end
         
         ConfigCallbacks[elementId] = {
-            Type = elementType,
-            Tab = tabName,
-            Section = sectionName,
+            Type = elementType or "Unknown",
+            Tab = tabName or "Unknown",
+            Section = sectionName or "Unknown",
             GetValue = getCallback,
             SetValue = setCallback
         }
@@ -1280,13 +1294,22 @@ function DeltaLib:CreateWindow(title, size)
                 
                 SaveButton.Text = "Save Configuration"
                 SaveButton.BackgroundColor3 = Colors.NeonRed
+                
+                -- Show error message
+                pcall(function()
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Config Save Error",
+                        Text = message,
+                        Duration = 5,
+                    })
+                end)
             end
         end)
 
         local loadDebounce = CreateDebounce(0.5)
         local LoadButton = Instance.new("TextButton")
         LoadButton.Name = "LoadButton"
-        LoadButton.Size = UDim2.new(1, -10, 0, 22)
+        LoadButton.Size = UDim2.new(0, 22, 0, 22)
         LoadButton.Position = UDim2.new(0, 5, 0, 50)
         LoadButton.BackgroundColor3 = Colors.DarkBackground
         LoadButton.BorderSizePixel = 0
@@ -1570,7 +1593,7 @@ function DeltaLib:CreateWindow(title, size)
         
         if ConfigSettings.AutoLoadConfig and ConfigSettings.LastLoadedConfig ~= "" then
             task.spawn(function()
-                task.wait(1)
+                task.wait(2) -- Increased wait time for UI to fully load
                 
                 local configExists = false
                 pcall(function()
