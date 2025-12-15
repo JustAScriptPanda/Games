@@ -606,11 +606,9 @@ function DeltaLib:CreateWindow(title, size)
         LastLoadedConfig = ""
     }
 
-    -- Function to create config file name
+    -- Function to create config file name (Simple name without title)
     local function GetConfigFileName(configName)
-        local safeTitle = title or "DeltaUI"
-        safeTitle = safeTitle:gsub("[^%w%s]", ""):gsub("%s+", "_")
-        return safeTitle .. "_" .. (configName or "default") .. ".json"
+        return (configName or "default") .. ".json"
     end
 
     -- Function to save configuration settings
@@ -779,9 +777,9 @@ function DeltaLib:CreateWindow(title, size)
             return false, "Failed to parse JSON: " .. tostring(decodeError)
         end
         
-        -- Check if config is from a different window
+        -- Check if config is from a different window (just warning, not error)
         if configData.WindowTitle and configData.WindowTitle ~= title then
-            return false, "Config is for a different window: " .. configData.WindowTitle
+            warn("DeltaLib: Config was saved for window: " .. configData.WindowTitle .. ", current window: " .. title)
         end
         
         -- Apply settings with error handling
@@ -818,7 +816,7 @@ function DeltaLib:CreateWindow(title, size)
             else
                 errorCount = errorCount + 1
                 if not callbackInfo then
-                    table.insert(errors, elementId .. ": Element not found (might be from different tab/section)")
+                    table.insert(errors, elementId .. ": Element not found")
                 else
                     table.insert(errors, elementId .. ": SetValue is not a function")
                 end
@@ -880,10 +878,9 @@ function DeltaLib:CreateWindow(title, size)
                 local fileName = filePath:match("[^\\/]+$")
                 if fileName:match("%.json$") and fileName ~= "config_settings.json" then
                     local configName = fileName:gsub("%.json$", "")
-                    local baseName = configName:match("^.+_(.+)$") or configName
                     table.insert(allConfigs, {
                         FullName = configName,
-                        BaseName = baseName,
+                        BaseName = configName,
                         FileName = fileName
                     })
                 end
@@ -893,24 +890,20 @@ function DeltaLib:CreateWindow(title, size)
         return allConfigs
     end
 
-    -- Function to list configurations for this specific window
+    -- Function to list configurations
     local function ListConfigurations()
         if not IsFileSystemAvailable() then
             return {}
         end
         
-        local windowConfigs = {}
+        local configs = {}
         local allConfigs = ListAllConfigurations()
-        local safeTitle = title or "DeltaUI"
-        safeTitle = safeTitle:gsub("[^%w%s]", ""):gsub("%s+", "_")
         
         for _, config in ipairs(allConfigs) do
-            if config.FullName:match("^" .. safeTitle .. "_") then
-                table.insert(windowConfigs, config.BaseName)
-            end
+            table.insert(configs, config.BaseName)
         end
         
-        return windowConfigs
+        return configs
     end
 
     -- Function to register element for configuration
@@ -2481,6 +2474,12 @@ function DeltaLib:CreateWindow(title, size)
                 local isAnimating = false
                 local selectedOptions = {}
 
+                -- Initialize selected options with boolean values
+                for _, option in ipairs(options) do
+                    selectedOptions[option] = false
+                end
+
+                -- Set default selections
                 for _, option in ipairs(default) do
                     if table.find(options, option) then
                         selectedOptions[option] = true
@@ -2608,15 +2607,15 @@ function DeltaLib:CreateWindow(title, size)
                         Checkmark.Visible = selectedOptions[option]
                         
                         UpdateSelectedText()
-                        task.spawn(function()
-                            local currentSelected = {}
-                            for opt, selected in pairs(selectedOptions) do
-                                if selected then
-                                    table.insert(currentSelected, opt)
-                                end
+                        
+                        -- Call callback with array of selected option names
+                        local currentSelected = {}
+                        for opt, selected in pairs(selectedOptions) do
+                            if selected then
+                                table.insert(currentSelected, opt)
                             end
-                            callback(currentSelected)
-                        end)
+                        end
+                        callback(currentSelected)
                     end)
 
                     return OptionButton
@@ -2664,22 +2663,47 @@ function DeltaLib:CreateWindow(title, size)
                 local elementId = tabName .. "_" .. sectionName .. "_" .. dropdownText
                 RegisterConfigElement(elementId, "MultiDropdown", tabName, sectionName,
                     function() 
-                        local selectedList = {}
-                        for option, selected in pairs(selectedOptions) do
-                            if selected then
-                                table.insert(selectedList, option)
-                            end
+                        -- Return complete state with all options and their boolean values
+                        local completeState = {}
+                        for _, option in ipairs(options) do
+                            completeState[option] = selectedOptions[option] or false
                         end
-                        return selectedList
+                        return completeState
                     end,
                     function(value)
-                        selectedOptions = {}
-                        for _, option in ipairs(value) do
-                            if table.find(options, option) then
-                                selectedOptions[option] = true
+                        if type(value) == "table" then
+                            -- Check if it's a boolean table or array
+                            local isBooleanTable = false
+                            for _, v in pairs(value) do
+                                if type(v) == "boolean" then
+                                    isBooleanTable = true
+                                    break
+                                end
+                            end
+                            
+                            if isBooleanTable then
+                                -- Boolean format: {Candy = true, Luau = false, gay = true, lol = true}
+                                for option, selected in pairs(value) do
+                                    if table.find(options, option) then
+                                        selectedOptions[option] = selected
+                                    end
+                                end
+                            else
+                                -- Array format: ["Candy", "gay", "lol"]
+                                -- Reset all to false first
+                                for _, option in ipairs(options) do
+                                    selectedOptions[option] = false
+                                end
+                                -- Set selected ones to true
+                                for _, option in ipairs(value) do
+                                    if table.find(options, option) then
+                                        selectedOptions[option] = true
+                                    end
+                                end
                             end
                         end
                         
+                        -- Update UI
                         for option, checkmark in pairs(OptionCheckmarks) do
                             if checkmark then
                                 checkmark.Visible = selectedOptions[option] or false
@@ -2687,18 +2711,52 @@ function DeltaLib:CreateWindow(title, size)
                         end
                         
                         UpdateSelectedText()
-                        callback(value)
+                        
+                        -- Call callback with array of selected option names
+                        local currentSelected = {}
+                        for opt, selected in pairs(selectedOptions) do
+                            if selected then
+                                table.insert(currentSelected, opt)
+                            end
+                        end
+                        callback(currentSelected)
                     end
                 )
 
                 function DropdownFunctions:SetValue(value)
-                    selectedOptions = {}
-                    for _, option in ipairs(value) do
-                        if table.find(options, option) then
-                            selectedOptions[option] = true
+                    if type(value) == "table" then
+                        -- Check if it's a boolean table or array
+                        local isBooleanTable = false
+                        for _, v in pairs(value) do
+                            if type(v) == "boolean" then
+                                isBooleanTable = true
+                                break
+                            end
+                        end
+                        
+                        if isBooleanTable then
+                            -- Boolean format: {Candy = true, Luau = false, gay = true, lol = true}
+                            for option, selected in pairs(value) do
+                                if table.find(options, option) then
+                                    selectedOptions[option] = selected
+                                end
+                            end
+                        else
+                            -- Array format: ["Candy", "gay", "lol"]
+                            -- Reset all to false first
+                            for _, option in ipairs(options) do
+                                selectedOptions[option] = false
+                            end
+                            -- Set selected ones to true
+                            for _, option in ipairs(value) do
+                                if table.find(options, option) then
+                                    selectedOptions[option] = true
+                                end
+                            end
                         end
                     end
                     
+                    -- Update UI
                     for option, checkmark in pairs(OptionCheckmarks) do
                         if checkmark then
                             checkmark.Visible = selectedOptions[option] or false
@@ -2707,6 +2765,7 @@ function DeltaLib:CreateWindow(title, size)
                     
                     UpdateSelectedText()
                     
+                    -- Call callback with array of selected option names
                     local currentSelected = {}
                     for opt, selected in pairs(selectedOptions) do
                         if selected then
@@ -2726,6 +2785,32 @@ function DeltaLib:CreateWindow(title, size)
                     return selectedList
                 end
 
+                function DropdownFunctions:GetFullState()
+                    local completeState = {}
+                    for _, option in ipairs(options) do
+                        completeState[option] = selectedOptions[option] or false
+                    end
+                    return completeState
+                end
+
+                function DropdownFunctions:SetFullState(state)
+                    if type(state) == "table" then
+                        for option, selected in pairs(state) do
+                            if table.find(options, option) then
+                                selectedOptions[option] = selected
+                            end
+                        end
+                        
+                        for option, checkmark in pairs(OptionCheckmarks) do
+                            if checkmark then
+                                checkmark.Visible = selectedOptions[option] or false
+                            end
+                        end
+                        
+                        UpdateSelectedText()
+                    end
+                end
+
                 function DropdownFunctions:Refresh(newOptions, newDefault)
                     options = newOptions or options
                     newDefault = newDefault or {}
@@ -2738,6 +2823,12 @@ function DeltaLib:CreateWindow(title, size)
                     OptionCheckmarks = {}
                     selectedOptions = {}
 
+                    -- Initialize with all options set to false
+                    for _, option in ipairs(options) do
+                        selectedOptions[option] = false
+                    end
+
+                    -- Set default selections
                     for _, option in ipairs(newDefault) do
                         if table.find(options, option) then
                             selectedOptions[option] = true
