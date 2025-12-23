@@ -198,21 +198,41 @@ do
 	end
 	
 	-- Helper function to get current input position for mobile support
-	function utility:GetInputPosition(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			return input.Position
-		elseif input.UserInputType == Enum.UserInputType.Touch then
-			return input.Position
+	function utility:GetInputPosition(inputObj)
+		if inputObj then
+			if inputObj.UserInputType == Enum.UserInputType.MouseMovement or inputObj.UserInputType == Enum.UserInputType.MouseButton1 then
+				return inputObj.Position
+			elseif inputObj.UserInputType == Enum.UserInputType.Touch then
+				return inputObj.Position
+			end
 		end
 		return Vector2.new(0, 0)
 	end
 	
 	-- Mobile support function to get touch position
 	function utility:GetTouchPosition()
+		-- In Roblox, we use input:GetTouches() (not GetTouches())
 		local touches = input:GetTouches()
 		if #touches > 0 then
 			return touches[1].Position
 		end
+		return Vector2.new(0, 0)
+	end
+	
+	-- Function to get current position for slider
+	function utility:GetCurrentPosition()
+		-- Try mouse position first
+		local mousePos = input:GetMouseLocation()
+		if mousePos ~= Vector2.new(0, 0) then
+			return mousePos
+		end
+		
+		-- Try touch position
+		local touches = input:GetTouches()
+		if #touches > 0 then
+			return touches[1].Position
+		end
+		
 		return Vector2.new(0, 0)
 	end
 end
@@ -1396,7 +1416,7 @@ do
 				rgb[prop] = value
 				hue, sat, brightness = Color3.toHSV(Color3.fromRGB(rgb.r, rgb.g, rgb.b))
 			end
-		}
+		end
 		
 		local callback = function(value)
 			if callback then
@@ -1460,14 +1480,7 @@ do
 			draggingCanvas = true
 			
 			while draggingCanvas do
-				local inputPos = utility:GetTouchPosition()
-				if inputPos == Vector2.new(0, 0) then
-					-- Try to get mouse position from InputBegan event
-					local inputEvent = input.InputBegan:Wait()
-					if inputEvent.UserInputType == Enum.UserInputType.MouseButton1 or inputEvent.UserInputType == Enum.UserInputType.Touch then
-						inputPos = utility:GetInputPosition(inputEvent)
-					end
-				end
+				local inputPos = utility:GetCurrentPosition()
 				
 				if inputPos ~= Vector2.new(0, 0) then
 					local x, y = inputPos.X, inputPos.Y
@@ -1498,13 +1511,7 @@ do
 			draggingColor = true
 			
 			while draggingColor do
-				local inputPos = utility:GetTouchPosition()
-				if inputPos == Vector2.new(0, 0) then
-					local inputEvent = input.InputBegan:Wait()
-					if inputEvent.UserInputType == Enum.UserInputType.MouseButton1 or inputEvent.UserInputType == Enum.UserInputType.Touch then
-						inputPos = utility:GetInputPosition(inputEvent)
-					end
-				end
+				local inputPos = utility:GetCurrentPosition()
 				
 				if inputPos ~= Vector2.new(0, 0) then
 					local mouseX = inputPos.X
@@ -2012,7 +2019,7 @@ do
 		end
 		
 		self.container.CanvasSize = UDim2.new(0, 0, 0, size)
-		self.container.ScrollBarImageTransparency = size > self.container.AbsoluteSize.Y
+		self.container.ScrollBarImageTransparency = size > self.container.AbsoluteSize.Y and 0 or 1
 		
 		if scroll then
 			utility:Tween(self.container, {CanvasPosition = Vector2.new(0, self.lastPosition or 0)}, 0.2)
@@ -2029,7 +2036,9 @@ do
 		local size = (4 * padding) + self.container.Title.AbsoluteSize.Y -- offset
 		
 		for i, module in pairs(self.modules) do
-			size = size + module.AbsoluteSize.Y + padding
+			if module and module.AbsoluteSize then
+				size = size + module.AbsoluteSize.Y + padding
+			end
 		end
 		
 		if smooth then
@@ -2047,7 +2056,7 @@ do
 		end
 		
 		for i, module in pairs(self.modules) do
-			if (module:FindFirstChild("Title") or module:FindFirstChild("TextBox", true)).Text == info then
+			if (module:FindFirstChild("Title") or module:FindFirstChild("TextBox", true)) and (module:FindFirstChild("Title") or module:FindFirstChild("TextBox", true)).Text == info then
 				return module
 			end
 		end
@@ -2173,24 +2182,23 @@ do
 		local bar = slider.Slider.Bar
 		
 		-- Get input position for mobile support
-		local inputPos = utility:GetTouchPosition()
-		if inputPos == Vector2.new(0, 0) then
-			-- If no touch, try to get mouse position
-			local inputEvent = input:GetMouseLocation()
-			inputPos = inputEvent
-		end
+		local inputPos = utility:GetCurrentPosition()
+		local barPos = bar.AbsolutePosition.X
+		local barSize = bar.AbsoluteSize.X
 		
 		local percent
 		if value then -- support negative ranges
 			percent = (value - min) / (max - min)
+		elseif inputPos ~= Vector2.new(0, 0) and barSize > 0 then
+			percent = (inputPos.X - barPos) / barSize
 		else
-			percent = (inputPos.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X
+			percent = 0
 		end
 		
 		percent = math.clamp(percent, 0, 1)
 		value = value or math.floor(min + (max - min) * percent)
 		
-		slider.TextBox.Text = value
+		slider.TextBox.Text = tostring(value)
 		utility:Tween(bar.Fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.1)
 		
 		if value ~= lvalue and slider.ImageTransparency == 0 then
@@ -2235,7 +2243,7 @@ do
 					Size = UDim2.new(1, -10, 1, 0),
 					ZIndex = 3,
 					Font = Enum.Font.Gotham,
-					Text = value,
+					Text = tostring(value),
 					TextColor3 = themes.TextColor,
 					TextSize = 12,
 					TextXAlignment = "Left",
@@ -2250,7 +2258,7 @@ do
 					end)	
 				end
 
-				self:updateDropdown(dropdown, value, nil, callback)
+				self:updateDropdown(dropdown, tostring(value), nil, callback)
 			end
 			
 			button.MouseButton1Click:Connect(onClick)
@@ -2261,7 +2269,8 @@ do
 		
 		local frame = dropdown.List.Frame
 		
-		utility:Tween(dropdown, {Size = UDim2.new(1, 0, 0, (entries == 0 and 30) or math.clamp(entries, 0, 3) * 34 + 38)}, 0.3)
+		local newHeight = (entries == 0 and 30) or math.clamp(entries, 0, 3) * 34 + 38
+		utility:Tween(dropdown, {Size = UDim2.new(1, 0, 0, newHeight)}, 0.3)
 		utility:Tween(dropdown.Search.Button, {Rotation = list and 180 or 0}, 0.3)
 		
 		if entries > 3 then
