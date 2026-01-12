@@ -1,7 +1,4 @@
 game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
-warn("Api current: Online
-warn("Version : 1.3v)
-print("This console gonna closed 4sec")
-wait(4)
-game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
-    
+warn("Velocity X")
+warn("Api current: Online")
+warn("Version : 1.3v")
