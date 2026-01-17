@@ -1,4 +1,5 @@
 -- DeltaLib.lua - Fixed Version
+game:Shutdown()
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
