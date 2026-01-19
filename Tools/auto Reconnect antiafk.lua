@@ -1,4 +1,6 @@
-if not game:IsLoaded() then game.Loaded:Wait() end
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
 
 local cloneref = cloneref or function(v) return v end
 
@@ -9,31 +11,54 @@ local VirtualUser = cloneref(game:GetService("VirtualUser"))
 
 local Player = Players.LocalPlayer
 local PlaceId = game.PlaceId
-local JobId = game.JobId
 
 Player.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
-local function Rejoin()
+local hopping = false
+
+local function ServerHop()
+    if hopping then return end
+    hopping = true
+
     pcall(function()
-        if #Players:GetPlayers() <= 1 then
-            Player:Kick("Rejoining...")
-            task.wait(0.5)
-            TeleportService:Teleport(PlaceId, Player)
+        if game.Servers and Player.CurrentServer then
+            local ServerList = {}
+
+            for _, Server in pairs(game.Servers:GetChildren()) do
+                if Server.Name ~= Player.CurrentServer.Name then
+                    table.insert(ServerList, Server)
+                end
+            end
+
+            if #ServerList > 0 then
+                local RandServer = ServerList[math.random(1, #ServerList)]
+                Player:Teleport(RandServer)
+            else
+                local RandServer = ServerList[math.random(1, #ServerList)]
+                Player:Teleport(RandServer)
+            end
         else
-            TeleportService:TeleportToPlaceInstance(PlaceId, JobId, Player)
+            local RandServer = ServerList[math.random(1, #ServerList)]
+            Player:Teleport(RandServer)
         end
+    end)
+
+    task.delay(0, function()
+        hopping = false
     end)
 end
 
 Player.OnTeleport:Connect(function(state)
     if state == Enum.TeleportState.Failed then
-        task.delay(0, Rejoin)
+        task.delay(1, ServerHop)
     end
 end)
 
 GuiService.ErrorMessageChanged:Connect(function()
-    task.delay(0, Rejoin)
+    task.delay(1, ServerHop)
 end)
+
+ServerHop()
