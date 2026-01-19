@@ -18,7 +18,7 @@ Player.Idled:Connect(function()
 end)
 
 local MAX_RETRIES = math.huge
-local RETRY_DELAY = 0
+local RETRY_DELAY = 2
 local hopping = false
 local triedServers = {}
 local function GetServer()
