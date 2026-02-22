@@ -1,6 +1,6 @@
 local RunService = cloneref(game:GetService("RunService"))
 local CoreGui = cloneref(game:GetService("CoreGui"))
-loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
+
 local ErrorPrompt = getrenv().require(CoreGui.RobloxGui.Modules.ErrorPrompt)
 local function NewScreen(ScreenName)
     local Screen = Instance.new("ScreenGui")
