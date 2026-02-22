@@ -1,5 +1,5 @@
 -- DeltaLib.lua - Fixed Version
-loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
+--loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
