@@ -1,5 +1,6 @@
 -- Last Updated 04/02/2022
--- Modified to add multi-select dropdowns and config save/load
+-- FULLY FIXED VERSION
+-- Fixes: multi-select dropdown (no table.find), config buttons, layout updates
 --loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
 local lib = {};
 local UIS = game:GetService("UserInputService");
@@ -471,15 +472,8 @@ function lib:CreateWindow(title, gameInfo)
         -- Dropdown for config files
         local dropdownContainer = {}
         function dropdownContainer:AddDropdown(text, tooltip, items, default, multi, callback)
-            -- We'll reuse the existing AddDropdown logic but need to adapt
-            -- For simplicity, we'll manually create the dropdown using the library's internal method? 
-            -- But we are inside the library, we can call the same functions we defined for user.
-            -- However, we haven't defined AddDropdown yet because it's defined later in the user's NewTab.
-            -- To avoid duplication, we can temporarily store the function and call it after it's defined?
-            -- Better: we can create a simple dropdown using our own code.
-            -- Since this is a special case, we'll implement a minimal dropdown here.
-            local multi = multi or false
-            local selected = multi and {} or default
+            -- Simple dropdown without multi (just for config selection)
+            local selected = default
             local frame = Create("Frame", {
                 BackgroundColor3 = Color3.fromRGB(13, 14, 16),
                 Size = UDim2.new(1, 0, 0, 30),
@@ -506,7 +500,7 @@ function lib:CreateWindow(title, gameInfo)
                 Position = UDim2.new(1,-185,0,3),
                 Parent = frame,
                 Font = window.Font,
-                Text = multi and "0 selected" or default,
+                Text = default,
                 PlaceholderText = "...",
                 TextColor3 = Color3.new(1,1,1),
                 TextSize = 14,
@@ -579,17 +573,13 @@ function lib:CreateWindow(title, gameInfo)
                         })
                     })
                     btn.MouseButton1Click:Connect(function()
-                        if not multi then
-                            selected = v
-                            textbox.Text = v
-                            open = false
-                            tween(togBtn.ImageLabel, 0.5, {Rotation = 270})
-                            tween(frame, 0.5, {Size = UDim2.new(1,0,0,30)})
-                            dropdownFrame.Visible = false
-                            if callback then callback(v) end
-                        else
-                            -- multi not needed for config dropdown
-                        end
+                        selected = v
+                        textbox.Text = v
+                        open = false
+                        tween(togBtn.ImageLabel, 0.5, {Rotation = 270})
+                        tween(frame, 0.5, {Size = UDim2.new(1,0,0,30)})
+                        dropdownFrame.Visible = false
+                        if callback then callback(v) end
                     end)
                     dropdownFrame.CanvasSize = UDim2.new(0,0,0, dropdownFrame.CanvasSize.Y.Offset + 36)
                 end
@@ -640,7 +630,12 @@ function lib:CreateWindow(title, gameInfo)
             return btn
         end
 
+        -- Load button
         createButton("Load", UDim2.new(0,0,0,0), function()
+            if not isfile then
+                showTooltip("File system not supported")
+                return
+            end
             local name = configDropdown.GetSelected()
             if name == "" then
                 showTooltip("No config selected")
@@ -675,7 +670,12 @@ function lib:CreateWindow(title, gameInfo)
             end
         end)
 
+        -- Save button
         createButton("Save", UDim2.new(0,105,0,0), function()
+            if not writefile then
+                showTooltip("File system not supported")
+                return
+            end
             local name = configDropdown.GetSelected()
             if name == "" then
                 showTooltip("No config selected")
@@ -705,7 +705,12 @@ function lib:CreateWindow(title, gameInfo)
             end
         end)
 
+        -- Delete button
         createButton("Delete", UDim2.new(0,210,0,0), function()
+            if not delfile then
+                showTooltip("File system not supported")
+                return
+            end
             local name = configDropdown.GetSelected()
             if name == "" then
                 showTooltip("No config selected")
@@ -751,6 +756,10 @@ function lib:CreateWindow(title, gameInfo)
         })
 
         createButton("Create", UDim2.new(0,155,0,35), function()
+            if not writefile then
+                showTooltip("File system not supported")
+                return
+            end
             local name = newNameBox.Text:gsub("%s+", "")
             if name == "" then
                 showTooltip("Enter a name")
@@ -833,8 +842,6 @@ function lib:CreateWindow(title, gameInfo)
             if success and data ~= "" then
                 autoState = true
                 configDropdown.SetSelected(data)
-                -- Load it after UI is ready? We'll do after all controls are registered.
-                -- We'll handle at the end.
             end
         end
         -- Update check appearance
@@ -855,21 +862,28 @@ function lib:CreateWindow(title, gameInfo)
                 -- Save auto-load setting
                 if autoState then
                     local name = configDropdown.GetSelected()
-                    if name ~= "" then
+                    if name ~= "" and writefile then
                         pcall(writefile, window.AutoLoadFile, name)
                     else
                         autoState = false
                         updateAutoCheck()
-                        showTooltip("Select a config first")
+                        if name == "" then
+                            showTooltip("Select a config first")
+                        else
+                            showTooltip("File system not supported")
+                        end
                         wait(1)
                         hideTooltip()
                     end
                 else
-                    pcall(writefile, window.AutoLoadFile, "")
+                    if writefile then
+                        pcall(writefile, window.AutoLoadFile, "")
+                    end
                 end
             end
         end)
 
+        -- Force container size update after all elements are added
         updateContainerSize()
 
         -- If auto-load is enabled, load the config now
@@ -1199,8 +1213,16 @@ function lib:CreateWindow(title, gameInfo)
                 }
             end
 
-            -- Modified dropdown with multi-select support
+            -- FIXED dropdown with multi-select support (no table.find)
             function components:AddDropdown(dropdownText, tooltip, items, default, multi, callback)
+                -- Helper to find in table (replaces table.find)
+                local function tableFind(t, val)
+                    for i, v in ipairs(t) do
+                        if v == val then return i end
+                    end
+                    return nil
+                end
+
                 -- Handle optional multi parameter
                 if type(multi) == "function" then
                     callback = multi
@@ -1347,7 +1369,7 @@ function lib:CreateWindow(title, gameInfo)
                         local itemText = i.." - "..v
                         local isSelected = false
                         if multi then
-                            isSelected = table.find(selectedValues, v) ~= nil
+                            isSelected = tableFind(selectedValues, v) ~= nil
                         else
                             isSelected = (v == selectedSingle)
                         end
@@ -1397,7 +1419,7 @@ function lib:CreateWindow(title, gameInfo)
 
                         itemBtn.MouseButton1Click:Connect(function()
                             if multi then
-                                local idx = table.find(selectedValues, v)
+                                local idx = tableFind(selectedValues, v)
                                 if idx then
                                     table.remove(selectedValues, idx)
                                 else
