@@ -1,6 +1,8 @@
 -- Last Updated 04/02/2022
--- FULLY FIXED VERSION
--- Fixes: multi-select dropdown (no table.find), config buttons, layout updates
+-- ENHANCED VERSION
+-- Fixes: multi-select dropdown now includes "Select All" toggle.
+-- Config tab buttons redesigned: larger, with icons, better alignment.
+-- All previously fixed bugs remain resolved.
 --loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
 local lib = {};
 local UIS = game:GetService("UserInputService");
@@ -21,9 +23,9 @@ function Create(instance, properties, children)
     local obj = Instance.new(instance)
     for i, v in pairs(properties or {}) do
         obj[i] = v
-        for _, child in pairs(children or {}) do
-            child.Parent = obj;
-        end
+    end
+    for _, child in pairs(children or {}) do
+        child.Parent = obj;
     end
     return obj;
 end
@@ -469,10 +471,9 @@ function lib:CreateWindow(title, gameInfo)
             window.ConfigTabPage.CanvasSize = UDim2.new(0, 0, 0, sizeTab(window.ConfigTabPage) + 10)
         end
 
-        -- Dropdown for config files
+        -- Dropdown for config files (simplified)
         local dropdownContainer = {}
-        function dropdownContainer:AddDropdown(text, tooltip, items, default, multi, callback)
-            -- Simple dropdown without multi (just for config selection)
+        function dropdownContainer:AddDropdown(text, tooltip, items, default, callback)
             local selected = default
             local frame = Create("Frame", {
                 BackgroundColor3 = Color3.fromRGB(13, 14, 16),
@@ -595,21 +596,22 @@ function lib:CreateWindow(title, gameInfo)
             }
         end
 
-        configDropdown = dropdownContainer:AddDropdown("Select Config", "Choose a config file", listConfigs(window.ConfigFolder), "", false, function(val)
+        configDropdown = dropdownContainer:AddDropdown("Select Config", "Choose a config file", listConfigs(window.ConfigFolder), "", function(val)
             selectedConfig = val
         end)
 
-        -- Buttons row
+        -- Buttons row with improved design (larger, icons)
         local buttonRow = Create("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1,0,0,35),
+            Size = UDim2.new(1,0,0,45),
             Parent = container,
             LayoutOrder = order+1
         })
-        local function createButton(name, pos, callback)
+
+        local function createIconButton(name, iconAsset, pos, callback)
             local btn = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(13,14,16),
-                Size = UDim2.new(0, 100, 0, 30),
+                Size = UDim2.new(0, 90, 0, 35),
                 Position = pos,
                 Parent = buttonRow,
                 Text = "",
@@ -617,32 +619,34 @@ function lib:CreateWindow(title, gameInfo)
             }, {
                 Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
                 Create("UICorner", {CornerRadius = UDim.new(0,4)}),
+                Create("ImageLabel", {
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(0,16,0,16),
+                    Position = UDim2.new(0,10,0.5,-8),
+                    Image = iconAsset,
+                    ImageColor3 = Color3.new(1,1,1),
+                    ScaleType = Enum.ScaleType.Fit
+                }),
                 Create("TextLabel", {
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1,0,1,0),
+                    Position = UDim2.new(0,30,0,0),
+                    Size = UDim2.new(1,-35,1,0),
                     Font = window.Font,
                     Text = name,
                     TextColor3 = Color3.new(1,1,1),
-                    TextSize = 14
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Left
                 })
             })
             btn.MouseButton1Click:Connect(callback)
             return btn
         end
 
-        -- Load button
-        createButton("Load", UDim2.new(0,0,0,0), function()
-            if not isfile then
-                showTooltip("File system not supported")
-                return
-            end
+        -- Icons (using placeholder asset IDs; you can replace with your own)
+        createIconButton("Load", "rbxassetid://6023426921", UDim2.new(0,0,0,5), function()
+            if not isfile then showTooltip("File system not supported"); return end
             local name = configDropdown.GetSelected()
-            if name == "" then
-                showTooltip("No config selected")
-                wait(1)
-                hideTooltip()
-                return
-            end
+            if name == "" then showTooltip("No config selected"); return end
             local path = window.ConfigFolder .. "/" .. name .. ".json"
             if isfile and isfile(path) then
                 local success, data = pcall(readfile, path)
@@ -650,101 +654,73 @@ function lib:CreateWindow(title, gameInfo)
                     local success2, config = pcall(HttpService.JSONDecode, HttpService, data)
                     if success2 then
                         window:SetConfig(config)
-                        showTooltip("Config loaded: " .. name)
-                        wait(1)
-                        hideTooltip()
+                        showTooltip("Loaded: "..name)
                     else
-                        showTooltip("Invalid config file")
-                        wait(1)
-                        hideTooltip()
+                        showTooltip("Invalid config")
                     end
                 else
-                    showTooltip("Failed to read file")
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Failed to read")
                 end
             else
                 showTooltip("File not found")
-                wait(1)
-                hideTooltip()
             end
+            wait(1); hideTooltip()
         end)
 
-        -- Save button
-        createButton("Save", UDim2.new(0,105,0,0), function()
-            if not writefile then
-                showTooltip("File system not supported")
-                return
-            end
+        createIconButton("Save", "rbxassetid://6023426929", UDim2.new(0,95,0,5), function()
+            if not writefile then showTooltip("File system not supported"); return end
             local name = configDropdown.GetSelected()
-            if name == "" then
-                showTooltip("No config selected")
-                wait(1)
-                hideTooltip()
-                return
-            end
+            if name == "" then showTooltip("No config selected"); return end
             local path = window.ConfigFolder .. "/" .. name .. ".json"
             local config = window:GetConfig()
             local success, json = pcall(HttpService.JSONEncode, HttpService, config)
             if success then
                 local success2 = pcall(writefile, path, json)
                 if success2 then
-                    showTooltip("Config saved: " .. name)
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Saved: "..name)
                     refreshConfigList()
                 else
-                    showTooltip("Failed to write file")
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Failed to write")
                 end
             else
-                showTooltip("Failed to encode config")
-                wait(1)
-                hideTooltip()
+                showTooltip("Failed to encode")
             end
+            wait(1); hideTooltip()
         end)
 
-        -- Delete button
-        createButton("Delete", UDim2.new(0,210,0,0), function()
-            if not delfile then
-                showTooltip("File system not supported")
-                return
-            end
+        createIconButton("Delete", "rbxassetid://6023426919", UDim2.new(0,190,0,5), function()
+            if not delfile then showTooltip("File system not supported"); return end
             local name = configDropdown.GetSelected()
-            if name == "" then
-                showTooltip("No config selected")
-                wait(1)
-                hideTooltip()
-                return
-            end
+            if name == "" then showTooltip("No config selected"); return end
             local path = window.ConfigFolder .. "/" .. name .. ".json"
             if isfile and isfile(path) then
                 local success = pcall(delfile, path)
                 if success then
-                    showTooltip("Config deleted: " .. name)
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Deleted: "..name)
                     configDropdown.SetSelected("")
                     refreshConfigList()
                 else
-                    showTooltip("Failed to delete file")
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Failed to delete")
                 end
             else
                 showTooltip("File not found")
-                wait(1)
-                hideTooltip()
             end
+            wait(1); hideTooltip()
         end)
 
         -- Create new config with textbox
+        local newRow = Create("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1,0,0,40),
+            Parent = container,
+            LayoutOrder = order+2
+        })
+
         local newNameBox = Create("TextBox", {
             BackgroundColor3 = Color3.fromRGB(13,14,16),
-            Size = UDim2.new(0, 150, 0, 30),
-            Position = UDim2.new(0,0,0,35),
-            Parent = buttonRow,
+            Size = UDim2.new(0, 150, 0, 35),
+            Position = UDim2.new(0,0,0,0),
+            Parent = newRow,
             Font = window.Font,
             PlaceholderText = "New config name",
             Text = "",
@@ -755,55 +731,39 @@ function lib:CreateWindow(title, gameInfo)
             Create("UICorner", {CornerRadius = UDim.new(0,4)})
         })
 
-        createButton("Create", UDim2.new(0,155,0,35), function()
-            if not writefile then
-                showTooltip("File system not supported")
-                return
-            end
+        createIconButton("Create", "rbxassetid://6023426934", UDim2.new(0,155,0,0), function()
+            if not writefile then showTooltip("File system not supported"); return end
             local name = newNameBox.Text:gsub("%s+", "")
-            if name == "" then
-                showTooltip("Enter a name")
-                wait(1)
-                hideTooltip()
-                return
-            end
+            if name == "" then showTooltip("Enter a name"); return end
             local path = window.ConfigFolder .. "/" .. name .. ".json"
             if isfile and isfile(path) then
-                showTooltip("Config already exists")
-                wait(1)
-                hideTooltip()
+                showTooltip("Already exists")
                 return
             end
-            -- Save current config as new file
             local config = window:GetConfig()
             local success, json = pcall(HttpService.JSONEncode, HttpService, config)
             if success then
                 local success2 = pcall(writefile, path, json)
                 if success2 then
-                    showTooltip("Config created: " .. name)
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Created: "..name)
                     refreshConfigList()
                     configDropdown.SetSelected(name)
                     newNameBox.Text = ""
                 else
-                    showTooltip("Failed to write file")
-                    wait(1)
-                    hideTooltip()
+                    showTooltip("Failed to write")
                 end
             else
-                showTooltip("Failed to encode config")
-                wait(1)
-                hideTooltip()
+                showTooltip("Failed to encode")
             end
+            wait(1); hideTooltip()
         end)
 
-        -- Auto-load toggle
+        -- Auto-load toggle (unchanged but repositioned)
         local autoLoadToggle = Create("Frame", {
             BackgroundColor3 = Color3.fromRGB(13,14,16),
-            Size = UDim2.new(1,0,0,30),
+            Size = UDim2.new(1,0,0,35),
             Parent = container,
-            LayoutOrder = order+2
+            LayoutOrder = order+3
         }, {
             Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
             Create("UICorner", {CornerRadius = UDim.new(0,4)}),
@@ -836,7 +796,6 @@ function lib:CreateWindow(title, gameInfo)
             })
         })
         local autoState = false
-        -- Read auto-load setting
         if isfile and isfile(window.AutoLoadFile) then
             local success, data = pcall(readfile, window.AutoLoadFile)
             if success and data ~= "" then
@@ -844,7 +803,6 @@ function lib:CreateWindow(title, gameInfo)
                 configDropdown.SetSelected(data)
             end
         end
-        -- Update check appearance
         local function updateAutoCheck()
             TS:Create(autoCheck.ImageLabel, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
                 Size = autoState and UDim2.new(0,20,0,20) or UDim2.new(0,0,0,0),
@@ -859,7 +817,6 @@ function lib:CreateWindow(title, gameInfo)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 autoState = not autoState
                 updateAutoCheck()
-                -- Save auto-load setting
                 if autoState then
                     local name = configDropdown.GetSelected()
                     if name ~= "" and writefile then
@@ -867,26 +824,18 @@ function lib:CreateWindow(title, gameInfo)
                     else
                         autoState = false
                         updateAutoCheck()
-                        if name == "" then
-                            showTooltip("Select a config first")
-                        else
-                            showTooltip("File system not supported")
-                        end
-                        wait(1)
-                        hideTooltip()
+                        if name == "" then showTooltip("Select a config first") else showTooltip("File system not supported") end
+                        wait(1); hideTooltip()
                     end
                 else
-                    if writefile then
-                        pcall(writefile, window.AutoLoadFile, "")
-                    end
+                    if writefile then pcall(writefile, window.AutoLoadFile, "") end
                 end
             end
         end)
 
-        -- Force container size update after all elements are added
         updateContainerSize()
 
-        -- If auto-load is enabled, load the config now
+        -- Auto-load if enabled
         if autoState then
             local name = configDropdown.GetSelected()
             if name ~= "" then
@@ -895,9 +844,7 @@ function lib:CreateWindow(title, gameInfo)
                     local success, data = pcall(readfile, path)
                     if success then
                         local success2, config = pcall(HttpService.JSONDecode, HttpService, data)
-                        if success2 then
-                            window:SetConfig(config)
-                        end
+                        if success2 then window:SetConfig(config) end
                     end
                 end
             end
@@ -1213,9 +1160,9 @@ function lib:CreateWindow(title, gameInfo)
                 }
             end
 
-            -- FIXED dropdown with multi-select support (no table.find)
+            -- ENHANCED multi-select dropdown with "Select All" option
             function components:AddDropdown(dropdownText, tooltip, items, default, multi, callback)
-                -- Helper to find in table (replaces table.find)
+                -- Helper to find in table
                 local function tableFind(t, val)
                     for i, v in ipairs(t) do
                         if v == val then return i end
@@ -1230,7 +1177,7 @@ function lib:CreateWindow(title, gameInfo)
                 end
                 multi = multi or false
                 callback = callback or function() end
-                local ee = {}  -- returned object
+                local ee = {}
                 tooltip = tooltip or nil
                 items = items or {}
                 local dropdownOpen = false
@@ -1254,93 +1201,66 @@ function lib:CreateWindow(title, gameInfo)
                     LayoutOrder = order,
                     ClipsDescendants = true
                 }, {
-                    Create("UIStroke", {
-                        ApplyStrokeMode = 1,
-                        Color = Color3.fromRGB(24, 25, 30)
-                    }),
-                    Create("UICorner", {
-                        CornerRadius = UDim.new(0, 4)
-                    }),
+                    Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
+                    Create("UICorner", {CornerRadius = UDim.new(0,4)}),
                     Create("TextLabel", {
                         BackgroundTransparency = 1,
-                        Position = UDim2.new(0, 10, 0, 8),
-                        Size = UDim2.new(1, -10, 0, 14),
+                        Position = UDim2.new(0,10,0,8),
+                        Size = UDim2.new(1,-10,0,14),
                         Font = window.Font,
                         Text = dropdownText,
-                        TextColor3 = Color3.new(1, 1, 1),
+                        TextColor3 = Color3.new(1,1,1),
                         TextSize = 14,
                         TextXAlignment = Enum.TextXAlignment.Left
                     })
                 })
 
                 local textbox = Create("TextBox", {
-                    BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-                    Size = UDim2.new(0, 150, 0, 24),
-                    Position = UDim2.new(1, -185, 0, 3),
+                    BackgroundColor3 = Color3.fromRGB(13,14,16),
+                    Size = UDim2.new(0,150,0,24),
+                    Position = UDim2.new(1,-185,0,3),
                     Parent = b1,
                     Font = window.Font,
                     Text = multi and (#selectedValues.." selected") or selectedSingle,
                     PlaceholderText = "...",
-                    TextColor3 = Color3.new(1, 1, 1),
+                    TextColor3 = Color3.new(1,1,1),
                     TextSize = 14,
-                    TextWrapped = true,
                     TextEditable = false
                 }, {
-                    Create("UIStroke", {
-                        ApplyStrokeMode = 1,
-                        Color =Color3.fromRGB(24, 25, 30)
-                    }),
-                    Create("UICorner", {
-                        CornerRadius = UDim.new(0, 4)
-                    })
+                    Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
+                    Create("UICorner", {CornerRadius = UDim.new(0,4)})
                 })
 
                 local dropdownTog = Create("ImageButton", {
                     BackgroundTransparency = 1,
-                    Image = "",
-                    Position = UDim2.new(1, -30, 0, 3),
-                    Size = UDim2.new(0, 24, 0, 24),
+                    Position = UDim2.new(1,-30,0,3),
+                    Size = UDim2.new(0,24,0,24),
                     Parent = b1
                 }, {
-                    Create("UIStroke", {
-                        ApplyStrokeMode = 1,
-                        Color =Color3.fromRGB(24, 25, 30)
-                    }),
-                    Create("UICorner", {
-                        CornerRadius = UDim.new(0, 4)
+                    Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
+                    Create("UICorner", {CornerRadius = UDim.new(0,4)}),
+                    Create("ImageLabel", {
+                        BackgroundTransparency = 1,
+                        Image = "http://www.roblox.com/asset/?id=6031094670",
+                        Size = UDim2.new(1,0,1,0),
+                        Rotation = 270,
+                        Parent = dropdownTog
                     })
-                })
-            
-                local dropdownIcon = Create("ImageLabel", {
-                    BackgroundTransparency = 1,
-                    Image = "http://www.roblox.com/asset/?id=6031094670",
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Rotation = 270,
-                    Parent = dropdownTog
                 })
 
                 local dropdownContainer = Create("ScrollingFrame", {
                     BackgroundTransparency = 1,
                     BorderSizePixel = 0,
                     Size = UDim2.new(1, -4, 1, -32),
-                    CanvasSize = UDim2.new(0, 0, 0, 0),
-                    ScrollBarImageColor3 = Color3.fromRGB(42, 43, 53),
-                    BottomImage = "",
-                    TopImage = "",
+                    CanvasSize = UDim2.new(0,0,0,0),
+                    ScrollBarImageColor3 = Color3.fromRGB(42,43,53),
                     ScrollBarThickness = 6,
-                    VerticalScrollBarInset = 1,
                     Parent = b1,
-                    Position = UDim2.new(0, 2, 0, 32)
+                    Position = UDim2.new(0,2,0,32),
+                    Visible = false
                 }, {
-                    Create("UIListLayout", {
-                        Padding = UDim.new(0, 5)
-                    }),
-                    Create("UIPadding", {
-                        PaddingLeft = UDim.new(0, 5),
-                        PaddingRight = UDim.new(0, 5),
-                        PaddingTop = UDim.new(0, 5),
-                        PaddingBottom = UDim.new(0, 5)
-                    })
+                    Create("UIListLayout", {Padding = UDim.new(0,5)}),
+                    Create("UIPadding", {PaddingLeft = UDim.new(0,5), PaddingRight = UDim.new(0,5), PaddingTop = UDim.new(0,5), PaddingBottom = UDim.new(0,5)})
                 })
 
                 local function updateDisplay()
@@ -1358,11 +1278,51 @@ function lib:CreateWindow(title, gameInfo)
                     end
                 end
 
+                -- Function to rebuild dropdown items
                 local function populateDropdown()
                     for _, child in ipairs(dropdownContainer:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            child:Destroy()
-                        end
+                        if child:IsA("TextButton") then child:Destroy() end
+                    end
+
+                    -- If multi, add "Select All" button at the top
+                    if multi then
+                        local selectAllBtn = Create("TextButton", {
+                            BackgroundColor3 = Color3.fromRGB(13,14,16),
+                            Size = UDim2.new(1,0,0,30),
+                            Parent = dropdownContainer,
+                            Text = "",
+                            AutoButtonColor = false
+                        }, {
+                            Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
+                            Create("UICorner", {CornerRadius = UDim.new(0,4)}),
+                            Create("TextLabel", {
+                                BackgroundTransparency = 1,
+                                Position = UDim2.new(0,10,0.5,-8),
+                                Size = UDim2.new(1,-10,0,14),
+                                Font = window.Font,
+                                Text = "Select All",
+                                TextColor3 = Color3.new(1,1,1),
+                                TextSize = 14,
+                                TextXAlignment = Enum.TextXAlignment.Left
+                            })
+                        })
+                        selectAllBtn.MouseButton1Click:Connect(function()
+                            if #selectedValues == #items then
+                                -- Deselect all
+                                selectedValues = {}
+                            else
+                                -- Select all
+                                selectedValues = {}
+                                for _, v in ipairs(items) do
+                                    table.insert(selectedValues, v)
+                                end
+                            end
+                            -- Refresh all checkmarks
+                            populateDropdown()  -- This rebuilds everything, which is simpler
+                            updateDisplay()
+                            callback(selectedValues)
+                        end)
+                        dropdownContainer.CanvasSize = UDim2.new(0,0,0, (dropdownContainer.CanvasSize.Y.Offset or 0) + 36)
                     end
 
                     for i, v in pairs(items) do
@@ -1375,26 +1335,21 @@ function lib:CreateWindow(title, gameInfo)
                         end
 
                         local itemBtn = Create("TextButton", {
-                            BackgroundColor3 = Color3.fromRGB(13, 14, 16),
-                            Size = UDim2.new(1, 0, 0, 30),
+                            BackgroundColor3 = Color3.fromRGB(13,14,16),
+                            Size = UDim2.new(1,0,0,30),
                             Parent = dropdownContainer,
                             Text = "",
                             AutoButtonColor = false,
                         }, {
-                            Create("UIStroke", {
-                                ApplyStrokeMode = 1,
-                                Color = Color3.fromRGB(24, 25, 30)
-                            }),
-                            Create("UICorner", {
-                                CornerRadius = UDim.new(0, 4)
-                            }),
+                            Create("UIStroke", {Color = Color3.fromRGB(24,25,30)}),
+                            Create("UICorner", {CornerRadius = UDim.new(0,4)}),
                             Create("TextLabel", {
                                 BackgroundTransparency = 1,
-                                Position = UDim2.new(0, 10, 0.5, -8),
-                                Size = UDim2.new(1, -40, 0, 14),
+                                Position = UDim2.new(0,10,0.5,-8),
+                                Size = UDim2.new(1,-40,0,14),
                                 Font = window.Font,
                                 Text = itemText,
-                                TextColor3 = Color3.new(1, 1, 1),
+                                TextColor3 = Color3.new(1,1,1),
                                 TextSize = 14,
                                 TextXAlignment = Enum.TextXAlignment.Left
                             })
@@ -1403,8 +1358,8 @@ function lib:CreateWindow(title, gameInfo)
                         if multi then
                             local check = Create("ImageLabel", {
                                 BackgroundTransparency = 1,
-                                Position = UDim2.new(1, -25, 0.5, -10),
-                                Size = UDim2.new(0, 20, 0, 20),
+                                Position = UDim2.new(1,-25,0.5,-10),
+                                Size = UDim2.new(0,20,0,20),
                                 Image = "http://www.roblox.com/asset/?id=6031094667",
                                 ImageColor3 = window.AccentColor,
                                 ImageTransparency = isSelected and 0 or 1,
@@ -1435,10 +1390,11 @@ function lib:CreateWindow(title, gameInfo)
                                 updateDisplay()
                                 dropdownOpen = false
                                 tween(dropdownIcon, 0.5, {Rotation = 270})
-                                tween(b1, 0.5, {Size = UDim2.new(1, 0, 0, 30)})
+                                tween(b1, 0.5, {Size = UDim2.new(1,0,0,30)})
+                                dropdownContainer.Visible = false
                                 for _, btn in ipairs(dropdownContainer:GetChildren()) do
                                     if btn:IsA("TextButton") then
-                                        tween(btn.UIStroke, 0.2, {Color = Color3.fromRGB(24, 25, 30)})
+                                        tween(btn.UIStroke, 0.2, {Color = Color3.fromRGB(24,25,30)})
                                     end
                                 end
                                 tween(itemBtn.UIStroke, 0.2, {Color = window.AccentColor})
@@ -1446,22 +1402,23 @@ function lib:CreateWindow(title, gameInfo)
                             end
                         end)
 
-                        dropdownContainer.CanvasSize = UDim2.new(0, 0, 0, dropdownContainer.CanvasSize.Y.Offset + 36)
+                        dropdownContainer.CanvasSize = UDim2.new(0,0,0, dropdownContainer.CanvasSize.Y.Offset + 36)
                     end
                 end
 
                 populateDropdown()
 
                 dropdownTog.MouseButton1Click:Connect(function()
-                    dropdownOpen = not dropdownOpen;
+                    dropdownOpen = not dropdownOpen
                     tween(dropdownIcon, 0.5, {Rotation = dropdownOpen and 90 or 270})
-                    tween(b1, 0.5, {Size = dropdownOpen and UDim2.new(1, 0, 0, 120) or UDim2.new(1, 0, 0, 30)})
+                    tween(b1, 0.5, {Size = dropdownOpen and UDim2.new(1,0,0,120) or UDim2.new(1,0,0,30)})
+                    dropdownContainer.Visible = dropdownOpen
                 end)
 
                 b1.Changed:Connect(function(it)
                     if it == "Size" then
-                        container.Size = UDim2.new(1, 0, 0, sectionSize(bg));
-                        bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30);
+                        container.Size = UDim2.new(1,0,0, sectionSize(bg))
+                        bg.Size = UDim2.new(1,0,0, sectionSize(bg) + 30)
                     end
                 end)
 
@@ -1506,10 +1463,10 @@ function lib:CreateWindow(title, gameInfo)
                 b1.MouseLeave:Connect(function()
                     hideTooltip()
                 end)
-                container.Size = UDim2.new(1, 0, 0, sectionSize(bg));
-                bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30);
-                order = order + 1;
-                return ee;
+                container.Size = UDim2.new(1,0,0, sectionSize(bg))
+                bg.Size = UDim2.new(1,0,0, sectionSize(bg) + 30)
+                order = order + 1
+                return ee
             end
 
             function components:AddSlider(boxTitle, tooltip, minValue, maxValue, default, precise, callback)
@@ -1595,26 +1552,25 @@ function lib:CreateWindow(title, gameInfo)
                     return valuee;
                 end
 
-    sliderBg.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        move(input)
-        draggingg = true
-    end
-end)
+                sliderBg.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        move(input)
+                        draggingg = true
+                    end
+                end)
 
-sliderBg.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingg = false
-        hideTooltip()
-    end
-end)
+                sliderBg.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        draggingg = false
+                        hideTooltip()
+                    end
+                end)
 
-UIS.InputChanged:Connect(function(input)
-    if draggingg and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        move(input)
-    end
-end)
-
+                UIS.InputChanged:Connect(function(input)
+                    if draggingg and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                        move(input)
+                    end
+                end)
 
                 sliderBg.MouseEnter:Connect(function()
                     showTooltip(string.format("[%f/%f]", valuee, maxValue))
