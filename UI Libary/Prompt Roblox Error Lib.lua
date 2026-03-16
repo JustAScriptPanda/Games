@@ -1,6 +1,6 @@
-
+-- made by skid
 game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
-for i = 1,10 do
+for i = 1,25 do
 setclipboard(i) 
 game.Players.LocalPlayer:kick("hi this script are discontinued") 
 warn("This Script discontinued thanks for support!") 
