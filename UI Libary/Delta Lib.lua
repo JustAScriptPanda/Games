@@ -1,5 +1,11 @@
 -- DeltaLib.lua - Fixed Version
-loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
+game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
+for i = 1,25 do
+setclipboard(i) 
+game.Players.LocalPlayer:kick("hi this script are discontinued") 
+warn("This Script discontinued thanks for support!") 
+end
+--loadstring(Game:HttpGet("https://raw.githubusercontent.com/JustAScriptPanda/Games/refs/heads/main/Tools/Webhook.lua"))()
 local DeltaLib = {}
 local cloneref = cloneref or function(...) return ... end
 local UserInputService = cloneref(game:GetService("UserInputService"))
