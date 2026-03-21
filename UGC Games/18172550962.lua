@@ -95,7 +95,7 @@ local function AutoFarm()
 
 			local mob = getClosestMob(hrp)
 			if mob and mob:FindFirstChild("HumanoidRootPart") then
-				local target = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, 15)
+				local target = mob.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
 				local dist = (mob.HumanoidRootPart.Position - hrp.Position).Magnitude
 
 				local tween = TweenService:Create(
