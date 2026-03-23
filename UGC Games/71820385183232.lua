@@ -24,22 +24,28 @@
 --]]
 
 -- made by alwi / velocity x
+-- Anti AFK
 game:GetService("Players").LocalPlayer.Idled:Connect(function()
     game:GetService("VirtualUser"):CaptureController()
     game:GetService("VirtualUser"):ClickButton2(Vector2.new())
 end)
 
-game:GetService("Players").LocalPlayer.Character:PivotTo(CFrame.new(-669.153442, -4.075121, -7.740437))
+-- Teleport
+game:GetService("Players").LocalPlayer.Character:PivotTo(
+    CFrame.new(-669.153442, -4.075121, -7.740437)
+)
 
+-- Create Part
 Instance.new("Part", workspace)
-workspace:FindFirstChildOfClass("Part").Size = Vector3.new(100,1,100)
-workspace:FindFirstChildOfClass("Part").CFrame = CFrame.new(-664.837158, -12.995497, -11.279767)
-workspace:FindFirstChildOfClass("Part").Anchored = true
-workspace:FindFirstChildOfClass("Part").Material = Enum.Material.SmoothPlastic
-workspace:FindFirstChildOfClass("Part").Color = Color3.fromRGB(0,0,0)
-workspace:FindFirstChildOfClass("Part").Transparency = 0.2
+workspace:GetChildren()[#workspace:GetChildren()].Size = Vector3.new(100,1,100)
+workspace:GetChildren()[#workspace:GetChildren()].CFrame = CFrame.new(-664.837158, -12.995497, -11.279767)
+workspace:GetChildren()[#workspace:GetChildren()].Anchored = true
+workspace:GetChildren()[#workspace:GetChildren()].Material = Enum.Material.SmoothPlastic
+workspace:GetChildren()[#workspace:GetChildren()].Color = Color3.fromRGB(0,0,0)
+workspace:GetChildren()[#workspace:GetChildren()].Transparency = 0.2
 
-Instance.new("PointLight", workspace:FindFirstChildOfClass("Part"))
-workspace:FindFirstChildOfClass("PointLight").Brightness = 2
-workspace:FindFirstChildOfClass("PointLight").Range = 10
-workspace:FindFirstChildOfClass("PointLight").Color = Color3.fromRGB(255,255,255)
+-- Add Light
+Instance.new("PointLight", workspace:GetChildren()[#workspace:GetChildren()])
+workspace:GetChildren()[#workspace:GetChildren()].Brightness = 2
+workspace:GetChildren()[#workspace:GetChildren()].Range = 10
+workspace:GetChildren()[#workspace:GetChildren()].Color = Color3.fromRGB(255,255,255)
