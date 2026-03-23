@@ -30,11 +30,6 @@ game:GetService("Players").LocalPlayer.Idled:Connect(function()
     game:GetService("VirtualUser"):ClickButton2(Vector2.new())
 end)
 
--- Teleport
-game:GetService("Players").LocalPlayer.Character:PivotTo(
-    CFrame.new(-669.153442, -4.075121, -7.740437)
-)
-
 -- Create Part
 Instance.new("Part", workspace)
 workspace:GetChildren()[#workspace:GetChildren()].Size = Vector3.new(100,1,100)
@@ -49,3 +44,10 @@ Instance.new("PointLight", workspace:GetChildren()[#workspace:GetChildren()])
 workspace:GetChildren()[#workspace:GetChildren()].Brightness = 2
 workspace:GetChildren()[#workspace:GetChildren()].Range = 10
 workspace:GetChildren()[#workspace:GetChildren()].Color = Color3.fromRGB(255,255,255)
+
+-- Teleport
+while wait() do
+game:GetService("Players").LocalPlayer.Character:PivotTo(
+    CFrame.new(-669.153442, -4.075121, -7.740437)
+)
+end
